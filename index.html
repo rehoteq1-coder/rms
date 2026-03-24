@@ -1,0 +1,2067 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Rehoteq RMS — School Result Management</title>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;900&family=Outfit:wght@300;400;500;600;700;800&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet"/>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
+<style>
+/* ============================================================
+   VARIABLES & RESET
+   ============================================================ */
+:root{
+  --navy:#0a0f1e;
+  --deep:#0f1628;
+  --card:#141c30;
+  --card2:#1a2240;
+  --border:rgba(255,255,255,0.07);
+  --gold:#c9a84c;
+  --gold2:#f0c040;
+  --green:#00c853;
+  --red:#ff4444;
+  --cyan:#00b4d8;
+  --white:#f0f4ff;
+  --muted:rgba(240,244,255,0.45);
+  --font:'Outfit',sans-serif;
+  --serif:'Playfair Display',serif;
+  --mono:'DM Mono',monospace;
+}
+*{margin:0;padding:0;box-sizing:border-box;}
+body{font-family:var(--font);background:var(--navy);color:var(--white);min-height:100vh;overflow-x:hidden;}
+input,select,textarea,button{font-family:var(--font);}
+
+/* ============================================================
+   LAYOUT
+   ============================================================ */
+.app{display:flex;flex-direction:column;min-height:100vh;}
+header{
+  background:linear-gradient(135deg,var(--deep),var(--card));
+  border-bottom:1px solid var(--border);
+  padding:0.9rem 1.2rem;
+  display:flex;align-items:center;justify-content:space-between;
+  position:sticky;top:0;z-index:100;
+}
+.logo{display:flex;align-items:center;gap:10px;}
+.logo-icon{
+  width:38px;height:38px;border-radius:10px;
+  background:linear-gradient(135deg,#8b6914,var(--gold),var(--gold2));
+  display:flex;align-items:center;justify-content:center;
+  font-family:var(--serif);font-size:1rem;font-weight:900;color:#000;
+  box-shadow:0 0 20px rgba(201,168,76,0.3);
+}
+.logo-text h1{font-family:var(--serif);font-size:1rem;font-weight:700;color:var(--white);}
+.logo-text p{font-size:0.6rem;color:var(--muted);letter-spacing:0.1em;text-transform:uppercase;}
+.header-right{display:flex;align-items:center;gap:10px;}
+.school-badge{
+  background:rgba(201,168,76,0.1);border:1px solid rgba(201,168,76,0.3);
+  border-radius:20px;padding:4px 12px;font-size:0.7rem;
+  color:var(--gold);font-weight:600;display:none;
+}
+.sync-dot{
+  width:8px;height:8px;border-radius:50%;background:#555;
+  display:inline-block;margin-right:4px;
+}
+.sync-dot.on{background:var(--green);box-shadow:0 0 6px var(--green);}
+
+/* MAIN */
+main{flex:1;padding:1rem;max-width:900px;margin:0 auto;width:100%;}
+
+/* SECTIONS */
+section{display:none;}
+section.active{display:block;}
+
+/* PANELS */
+.panel{
+  background:var(--card);border:1px solid var(--border);
+  border-radius:14px;padding:1.2rem;margin-bottom:1rem;
+}
+.panel-title{
+  font-family:var(--serif);font-size:1.05rem;font-weight:700;
+  color:var(--white);margin-bottom:1rem;
+  display:flex;align-items:center;gap:8px;
+}
+.panel-title span{color:var(--gold);}
+
+/* FORMS */
+.form-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:1rem;}
+.form-group{display:flex;flex-direction:column;gap:5px;}
+.form-group label{font-size:0.72rem;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:0.08em;}
+.form-group input,.form-group select,.form-group textarea{
+  background:var(--card2);border:1px solid var(--border);border-radius:8px;
+  padding:9px 12px;color:var(--white);font-size:0.85rem;outline:none;
+  transition:border-color 0.2s;
+}
+.form-group input:focus,.form-group select:focus{border-color:rgba(201,168,76,0.4);}
+.form-group select option{background:var(--card2);}
+.full{grid-column:1/-1;}
+
+/* BUTTONS */
+.btn{
+  border:none;border-radius:8px;padding:9px 18px;font-size:0.82rem;
+  font-weight:600;cursor:pointer;transition:all 0.2s;display:inline-flex;
+  align-items:center;gap:6px;
+}
+.btn-primary{background:linear-gradient(135deg,#8b6914,var(--gold));color:#000;}
+.btn-primary:hover{opacity:0.9;transform:translateY(-1px);}
+.btn-ghost{background:transparent;border:1px solid var(--border);color:var(--muted);}
+.btn-ghost:hover{border-color:var(--gold);color:var(--gold);}
+.btn-danger{background:rgba(255,68,68,0.15);border:1px solid rgba(255,68,68,0.3);color:#ff6b6b;}
+.btn-success{background:rgba(0,200,83,0.15);border:1px solid rgba(0,200,83,0.3);color:var(--green);}
+.btn-sm{padding:6px 12px;font-size:0.75rem;}
+.btn-block{width:100%;justify-content:center;}
+
+/* BADGES */
+.badge{
+  display:inline-flex;align-items:center;padding:3px 10px;border-radius:20px;
+  font-size:0.68rem;font-weight:700;text-transform:uppercase;letter-spacing:0.05em;
+}
+.badge-active{background:rgba(0,200,83,0.15);color:var(--green);border:1px solid rgba(0,200,83,0.3);}
+.badge-due{background:rgba(255,165,0,0.15);color:orange;border:1px solid rgba(255,165,0,0.3);}
+.badge-suspended{background:rgba(255,68,68,0.15);color:var(--red);border:1px solid rgba(255,68,68,0.3);}
+.badge-t1{background:rgba(0,180,216,0.15);color:var(--cyan);}
+.badge-t2{background:rgba(201,168,76,0.15);color:var(--gold);}
+.badge-t3{background:rgba(0,200,83,0.15);color:var(--green);}
+
+/* TABLES */
+.tbl-wrap{overflow-x:auto;}
+table{width:100%;border-collapse:collapse;font-size:0.82rem;}
+th{background:var(--card2);color:var(--muted);padding:8px 10px;text-align:left;font-size:0.7rem;text-transform:uppercase;letter-spacing:0.06em;border-bottom:1px solid var(--border);}
+td{padding:8px 10px;border-bottom:1px solid var(--border);color:var(--white);}
+tr:last-child td{border:none;}
+tr:hover td{background:rgba(255,255,255,0.02);}
+
+/* TOAST */
+#toast{
+  position:fixed;bottom:20px;left:50%;transform:translateX(-50%) translateY(100px);
+  background:var(--card2);border:1px solid var(--border);border-radius:10px;
+  padding:10px 20px;font-size:0.82rem;color:var(--white);
+  transition:transform 0.3s;z-index:9999;white-space:nowrap;
+  box-shadow:0 8px 30px rgba(0,0,0,0.5);
+}
+#toast.show{transform:translateX(-50%) translateY(0);}
+#toast.success{border-color:rgba(0,200,83,0.4);color:var(--green);}
+#toast.error{border-color:rgba(255,68,68,0.4);color:var(--red);}
+
+/* ALERT BOX */
+.alert{
+  border-radius:10px;padding:12px 16px;margin-bottom:1rem;
+  font-size:0.82rem;display:flex;align-items:flex-start;gap:10px;
+}
+.alert-warning{background:rgba(255,165,0,0.08);border:1px solid rgba(255,165,0,0.25);color:orange;}
+.alert-danger{background:rgba(255,68,68,0.08);border:1px solid rgba(255,68,68,0.25);color:#ff6b6b;}
+.alert-success{background:rgba(0,200,83,0.08);border:1px solid rgba(0,200,83,0.25);color:var(--green);}
+.alert-info{background:rgba(0,180,216,0.08);border:1px solid rgba(0,180,216,0.25);color:var(--cyan);}
+
+/* STAT CARDS */
+.stats-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:10px;margin-bottom:1rem;}
+.stat-card{
+  background:var(--card);border:1px solid var(--border);border-radius:12px;
+  padding:1rem;text-align:center;
+}
+.stat-val{font-family:var(--serif);font-size:1.6rem;font-weight:900;color:var(--gold);}
+.stat-lbl{font-size:0.68rem;color:var(--muted);margin-top:2px;text-transform:uppercase;letter-spacing:0.06em;}
+
+/* LOGIN PAGE */
+.login-page{
+  min-height:100vh;display:flex;align-items:center;justify-content:center;
+  background:linear-gradient(135deg,var(--navy) 0%,var(--deep) 100%);
+  padding:1rem;
+}
+.login-box{
+  background:var(--card);border:1px solid var(--border);border-radius:20px;
+  padding:2rem;width:100%;max-width:420px;
+  box-shadow:0 20px 60px rgba(0,0,0,0.5);
+}
+.login-logo{text-align:center;margin-bottom:1.5rem;}
+.login-logo .big-icon{
+  width:60px;height:60px;border-radius:16px;margin:0 auto 10px;
+  background:linear-gradient(135deg,#8b6914,var(--gold),var(--gold2));
+  display:flex;align-items:center;justify-content:center;
+  font-family:var(--serif);font-size:1.6rem;font-weight:900;color:#000;
+  box-shadow:0 0 30px rgba(201,168,76,0.4);
+}
+.login-logo h2{font-family:var(--serif);font-size:1.3rem;color:var(--white);}
+.login-logo p{font-size:0.75rem;color:var(--muted);margin-top:3px;}
+.role-selector{
+  display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:1.2rem;
+}
+.role-btn{
+  background:var(--card2);border:1.5px solid var(--border);border-radius:10px;
+  padding:12px 8px;text-align:center;cursor:pointer;transition:all 0.2s;
+}
+.role-btn:hover,.role-btn.active{
+  border-color:rgba(201,168,76,0.5);background:rgba(201,168,76,0.08);
+}
+.role-btn .role-icon{font-size:1.4rem;margin-bottom:4px;}
+.role-btn .role-name{font-size:0.72rem;font-weight:600;color:var(--white);}
+.school-id-input{
+  background:rgba(201,168,76,0.05);border:1px solid rgba(201,168,76,0.2);
+  border-radius:10px;padding:10px 14px;margin-bottom:1rem;
+  font-size:0.82rem;color:var(--gold);text-align:center;
+  font-family:var(--mono);letter-spacing:0.1em;
+}
+
+/* SCORE TABLE */
+.score-table input[type="number"]{
+  width:65px;background:var(--card2);border:1px solid var(--border);
+  border-radius:6px;padding:5px 6px;color:var(--white);font-size:0.8rem;
+  text-align:center;outline:none;
+}
+.score-table input[type="number"]:focus{border-color:rgba(201,168,76,0.5);}
+.score-table input.disabled{opacity:0.4;pointer-events:none;}
+.total-cell{font-weight:700;font-family:var(--mono);color:var(--gold);}
+.grand-total-cell{font-weight:800;font-family:var(--mono);color:var(--green);}
+
+/* RESULT SHEET */
+.result-sheet{
+  background:#fff;color:#000;border-radius:12px;padding:24px;
+  font-family:Arial,sans-serif;
+}
+.rs-header{text-align:center;border-bottom:3px double #0a0f2c;padding-bottom:12px;margin-bottom:16px;}
+.rs-header h2{font-family:'Playfair Display',serif;font-size:1.4rem;color:#0a0f2c;font-weight:900;}
+.rs-header p{font-size:0.82rem;color:#555;margin-top:4px;}
+.rs-meta{display:grid;grid-template-columns:1fr 1fr;gap:6px 20px;margin-bottom:16px;}
+.rs-meta dt{color:#666;font-size:0.72rem;font-weight:700;text-transform:uppercase;}
+.rs-meta dd{font-weight:700;color:#000;margin-left:0;}
+.rs-tbl{width:100%;border-collapse:collapse;margin-bottom:16px;font-size:0.82rem;}
+.rs-tbl th{background:#0a0f2c;color:#fff;padding:7px 8px;text-align:left;font-size:0.72rem;}
+.rs-tbl td{padding:6px 8px;border-bottom:1px solid #ddd;color:#000;}
+.rs-tbl tr:nth-child(even) td{background:#f9f9f9;}
+.rs-summary{display:flex;gap:20px;justify-content:flex-end;margin-top:10px;}
+.rs-summary .sv{font-size:1.5rem;font-weight:900;color:#0a0f2c;}
+.rs-summary .sl{font-size:0.68rem;color:#888;text-align:center;}
+.rs-footer{margin-top:16px;border-top:1px solid #ddd;padding-top:10px;display:flex;justify-content:space-between;font-size:0.72rem;color:#888;}
+
+/* RESULT LINK BOX */
+.link-box{
+  background:var(--card2);border:1px solid rgba(0,180,216,0.3);border-radius:10px;
+  padding:12px 14px;display:flex;align-items:center;gap:10px;
+  font-family:var(--mono);font-size:0.75rem;color:var(--cyan);word-break:break-all;
+}
+
+/* PAYMENT STATUS BAR */
+.payment-bar{
+  border-radius:10px;padding:12px 16px;margin-bottom:1rem;
+  display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;
+}
+.payment-bar.active{background:rgba(0,200,83,0.08);border:1px solid rgba(0,200,83,0.25);}
+.payment-bar.due{background:rgba(255,165,0,0.08);border:1px solid rgba(255,165,0,0.25);}
+.payment-bar.suspended{background:rgba(255,68,68,0.08);border:1px solid rgba(255,68,68,0.25);}
+
+/* SUPER ADMIN SCHOOL CARD */
+.school-card{
+  background:var(--card);border:1px solid var(--border);border-radius:12px;
+  padding:1rem;margin-bottom:10px;display:flex;align-items:center;
+  justify-content:space-between;gap:10px;flex-wrap:wrap;
+}
+.school-card-left h3{font-size:0.9rem;font-weight:700;color:var(--white);margin-bottom:2px;}
+.school-card-left p{font-size:0.72rem;color:var(--muted);}
+
+/* RESPONSIVE */
+@media(max-width:600px){
+  .form-grid{grid-template-columns:1fr;}
+  .role-selector{grid-template-columns:1fr 1fr;}
+  .stats-grid{grid-template-columns:1fr 1fr;}
+}
+
+/* PRINT */
+@media print{
+  body *{visibility:hidden;}
+  .result-sheet,
+  .result-sheet *{visibility:visible;}
+  .result-sheet{
+    position:fixed;top:0;left:0;width:100%;
+    background:#fff!important;color:#000!important;
+    padding:20px!important;border-radius:0!important;
+  }
+  .no-print{display:none!important;}
+}
+</style>
+</head>
+<body>
+<div class="app">
+
+<!-- ============================================================
+     LOGIN PAGE
+     ============================================================ -->
+<div id="login-page" class="login-page">
+  <div class="login-box">
+    <div class="login-logo">
+      <div class="big-icon">R</div>
+      <h2>Rehoteq RMS</h2>
+      <p>School Result Management System</p>
+    </div>
+
+    <!-- School ID -->
+    <div class="form-group" style="margin-bottom:1rem;">
+      <label>School ID</label>
+      <input type="text" id="login-school-id" class="school-id-input"
+        placeholder="e.g. RMS-0001" style="width:100%;"
+        onchange="loadSchoolInfo()"/>
+    </div>
+    <div id="school-name-display" style="text-align:center;font-size:0.82rem;color:var(--gold);margin-bottom:1rem;display:none;"></div>
+
+    <!-- Role Selection -->
+    <label style="font-size:0.7rem;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:0.08em;margin-bottom:8px;display:block;">Select Your Role</label>
+    <div class="role-selector">
+      <div class="role-btn active" onclick="selectRole('admin',this)">
+        <div class="role-icon">⚙️</div>
+        <div class="role-name">Admin</div>
+      </div>
+      <div class="role-btn" onclick="selectRole('hod',this)">
+        <div class="role-icon">👩‍💼</div>
+        <div class="role-name">HOD</div>
+      </div>
+      <div class="role-btn" onclick="selectRole('teacher',this)">
+        <div class="role-icon">✍️</div>
+        <div class="role-name">Teacher</div>
+      </div>
+      <div class="role-btn" onclick="selectRole('student',this)">
+        <div class="role-icon">🎓</div>
+        <div class="role-name">Student</div>
+      </div>
+    </div>
+
+    <!-- Login Fields -->
+    <div id="login-fields">
+      <div class="form-group" style="margin-bottom:10px;" id="dept-field" style="display:none;">
+        <label>Department</label>
+        <select id="login-dept"><option value="">Select Department</option></select>
+      </div>
+      <div class="form-group" style="margin-bottom:10px;">
+        <label id="username-label">Username / Name</label>
+        <input type="text" id="login-user" placeholder="Enter your name or username"/>
+      </div>
+      <div class="form-group" style="margin-bottom:1rem;" id="pass-field">
+        <label>Password</label>
+        <input type="password" id="login-pass" placeholder="Enter password"/>
+      </div>
+    </div>
+
+    <button class="btn btn-primary btn-block" onclick="doLogin()" style="padding:12px;">
+      Login →
+    </button>
+
+    <div style="text-align:center;margin-top:1rem;">
+      <a href="#" onclick="showSuperAdmin()" style="font-size:0.7rem;color:var(--muted);text-decoration:none;">
+        Rehoteq Admin Portal
+      </a>
+    </div>
+  </div>
+</div>
+
+<!-- ============================================================
+     MAIN APP
+     ============================================================ -->
+<div id="main-app" style="display:none;">
+
+<header>
+  <div class="logo">
+    <div class="logo-icon">R</div>
+    <div class="logo-text">
+      <h1>Rehoteq <span style="color:var(--gold)">RMS</span></h1>
+      <p id="header-school-name">Loading...</p>
+    </div>
+  </div>
+  <div class="header-right">
+    <span id="school-badge" class="school-badge"></span>
+    <span style="font-size:0.72rem;color:var(--muted);">
+      <span class="sync-dot" id="sync-dot"></span>
+      <span id="sync-text">Offline</span>
+    </span>
+    <button class="btn btn-ghost btn-sm" onclick="logout()">Logout</button>
+  </div>
+</header>
+
+<!-- NAV -->
+<div id="main-nav" style="background:var(--card);border-bottom:1px solid var(--border);padding:0.5rem 1rem;display:flex;gap:6px;overflow-x:auto;">
+  <button class="btn btn-ghost btn-sm nav-btn active" id="nav-dashboard" onclick="showSection('dashboard',this)">🏠 Home</button>
+  <button class="btn btn-ghost btn-sm nav-btn" id="nav-hod" style="display:none" onclick="showSection('hod',this)">👩‍💼 HOD</button>
+  <button class="btn btn-ghost btn-sm nav-btn" id="nav-teacher" style="display:none" onclick="showSection('teacher',this)">✍️ Scores</button>
+  <button class="btn btn-ghost btn-sm nav-btn" id="nav-results" onclick="showSection('results',this)">📊 Results</button>
+  <button class="btn btn-ghost btn-sm nav-btn" id="nav-admin" style="display:none" onclick="showSection('admin',this)">⚙️ Admin</button>
+</div>
+
+<main>
+
+<!-- PAYMENT WARNING BANNER -->
+<div id="payment-banner" style="display:none;"></div>
+
+<!-- ============================================================
+     DASHBOARD
+     ============================================================ -->
+<section id="dashboard" class="active">
+  <div class="stats-grid" id="dash-stats">
+    <div class="stat-card"><div class="stat-val" id="ds-students">-</div><div class="stat-lbl">Students</div></div>
+    <div class="stat-card"><div class="stat-val" id="ds-subjects">-</div><div class="stat-lbl">Subjects</div></div>
+    <div class="stat-card"><div class="stat-val" id="ds-results">-</div><div class="stat-lbl">Results</div></div>
+    <div class="stat-card"><div class="stat-val" id="ds-term" style="font-size:1rem;">-</div><div class="stat-lbl">Current Term</div></div>
+  </div>
+
+  <div class="panel">
+    <div class="panel-title">📢 <span>Quick Access</span></div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">
+      <button class="btn btn-ghost" onclick="showSection('teacher',document.getElementById('nav-teacher'))">✍️ Enter Scores</button>
+      <button class="btn btn-ghost" onclick="showSection('results',document.getElementById('nav-results'))">📊 View Results</button>
+      <button class="btn btn-ghost" id="dash-hod-btn" style="display:none" onclick="showSection('hod',document.getElementById('nav-hod'))">👩‍💼 HOD Panel</button>
+      <button class="btn btn-ghost" id="dash-admin-btn" style="display:none" onclick="showSection('admin',document.getElementById('nav-admin'))">⚙️ Admin Panel</button>
+    </div>
+  </div>
+
+  <div class="panel" id="term-info-panel">
+    <div class="panel-title">📅 <span>Term Information</span></div>
+    <div id="term-info-content" style="font-size:0.85rem;color:var(--muted);"></div>
+  </div>
+</section>
+
+<!-- ============================================================
+     HOD PANEL
+     ============================================================ -->
+<section id="hod">
+  <div class="panel">
+    <div class="panel-title">👥 <span>Students</span>
+      <button class="btn btn-primary btn-sm" style="margin-left:auto;" onclick="toggleAddStudent()">+ Add Student</button>
+    </div>
+    <div id="add-student-form" style="display:none;margin-bottom:1rem;">
+      <div class="form-grid">
+        <div class="form-group">
+          <label>Reg Number</label>
+          <input type="text" id="h-reg" placeholder="e.g. SCH/2025/001"/>
+        </div>
+        <div class="form-group">
+          <label>Full Name</label>
+          <input type="text" id="h-name" placeholder="Full name"/>
+        </div>
+        <div class="form-group">
+          <label>Gender</label>
+          <select id="h-gender">
+            <option value="Male">Male</option>
+            <option value="Female">Female</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>Level</label>
+          <select id="h-level">
+            <option value="NTC 1">NTC 1</option>
+            <option value="NTC 2">NTC 2</option>
+            <option value="NTC 3">NTC 3</option>
+            <option value="JSS 1">JSS 1</option>
+            <option value="JSS 2">JSS 2</option>
+            <option value="JSS 3">JSS 3</option>
+            <option value="SS 1">SS 1</option>
+            <option value="SS 2">SS 2</option>
+            <option value="SS 3">SS 3</option>
+          </select>
+        </div>
+      </div>
+      <button class="btn btn-primary" onclick="addStudent()">Add Student</button>
+    </div>
+    <div class="tbl-wrap">
+      <table>
+        <thead><tr><th>Reg No</th><th>Name</th><th>Level</th><th>Gender</th><th>Action</th></tr></thead>
+        <tbody id="hod-students-body"></tbody>
+      </table>
+    </div>
+  </div>
+
+  <div class="panel">
+    <div class="panel-title">📚 <span>Subjects</span>
+      <button class="btn btn-primary btn-sm" style="margin-left:auto;" onclick="toggleAddSubject()">+ Add Subject</button>
+    </div>
+    <div id="add-subject-form" style="display:none;margin-bottom:1rem;">
+      <div class="form-grid">
+        <div class="form-group">
+          <label>Subject Code</label>
+          <input type="text" id="s-code" placeholder="e.g. CEI-17"/>
+        </div>
+        <div class="form-group">
+          <label>Subject Title</label>
+          <input type="text" id="s-title" placeholder="Full subject name"/>
+        </div>
+        <div class="form-group">
+          <label>Units</label>
+          <select id="s-units">
+            <option value="1">1</option>
+            <option value="2" selected>2</option>
+            <option value="3">3</option>
+            <option value="4">4</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>Level</label>
+          <select id="s-level">
+            <option value="">All Levels</option>
+            <option value="NTC 1">NTC 1</option>
+            <option value="NTC 2">NTC 2</option>
+            <option value="NTC 3">NTC 3</option>
+            <option value="JSS 1">JSS 1</option>
+            <option value="JSS 2">JSS 2</option>
+            <option value="JSS 3">JSS 3</option>
+            <option value="SS 1">SS 1</option>
+            <option value="SS 2">SS 2</option>
+            <option value="SS 3">SS 3</option>
+          </select>
+        </div>
+      </div>
+      <button class="btn btn-primary" onclick="addSubject()">Add Subject</button>
+    </div>
+    <div class="tbl-wrap">
+      <table>
+        <thead><tr><th>Code</th><th>Title</th><th>Units</th><th>Level</th><th>Action</th></tr></thead>
+        <tbody id="hod-subjects-body"></tbody>
+      </table>
+    </div>
+  </div>
+</section>
+
+<!-- ============================================================
+     SCORE ENTRY
+     ============================================================ -->
+<section id="teacher">
+  <div class="panel">
+    <div class="panel-title">📌 <span>Select Class & Subject</span></div>
+    <div class="form-grid">
+      <div class="form-group">
+        <label>Department / Class</label>
+        <select id="t-dept" onchange="loadTeacherSubjects()">
+          <option value="">Select Department</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label>Subject</label>
+        <select id="t-subject" onchange="loadStudentsForScoring()">
+          <option value="">Select Subject</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label>Term</label>
+        <select id="t-term" onchange="loadStudentsForScoring()">
+          <option value="First Term">First Term</option>
+          <option value="Second Term">Second Term</option>
+          <option value="Third Term">Third Term</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label>Session</label>
+        <input type="text" id="t-session" placeholder="e.g. 2024/2025"/>
+      </div>
+    </div>
+  </div>
+
+  <div id="t-score-panel" style="display:none;">
+    <div class="panel">
+      <div class="panel-title">
+        ✍️ <span id="t-subject-label">Enter Scores</span>
+        <span id="t-term-badge" class="badge badge-t1" style="margin-left:auto;"></span>
+      </div>
+      <div id="t-cumulative-info" style="display:none;" class="alert alert-info" style="margin-bottom:1rem;">
+        <span>ℹ️</span>
+        <span id="t-cumulative-text"></span>
+      </div>
+      <div class="tbl-wrap">
+        <table class="score-table">
+          <thead>
+            <tr>
+              <th>Reg No</th>
+              <th>Name</th>
+              <th>T1(10)</th>
+              <th>T2(10)</th>
+              <th>T3(10)</th>
+              <th>Exam(70)</th>
+              <th>Raw Total</th>
+              <th id="t-grand-header">Grand Total</th>
+              <th>Grade</th>
+            </tr>
+          </thead>
+          <tbody id="t-score-body"></tbody>
+        </table>
+      </div>
+      <div style="margin-top:1rem;display:flex;gap:10px;flex-wrap:wrap;">
+        <button class="btn btn-primary" onclick="submitTeacherScores()">💾 Save All Scores</button>
+        <button class="btn btn-ghost" onclick="clearScores()">🗑️ Clear</button>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============================================================
+     RESULTS VIEW
+     ============================================================ -->
+<section id="results">
+  <div class="panel">
+    <div class="panel-title">🔍 <span>Search Results</span></div>
+    <div class="form-grid">
+      <div class="form-group">
+        <label>Department</label>
+        <select id="r-dept" onchange="searchResults()">
+          <option value="">All Departments</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label>Term</label>
+        <select id="r-term" onchange="searchResults()">
+          <option value="">All Terms</option>
+          <option value="First Term">First Term</option>
+          <option value="Second Term">Second Term</option>
+          <option value="Third Term">Third Term</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label>Session</label>
+        <input type="text" id="r-session" placeholder="e.g. 2024/2025" oninput="searchResults()"/>
+      </div>
+    </div>
+  </div>
+
+  <div class="tbl-wrap">
+    <table>
+      <thead><tr><th>Reg No</th><th>Name</th><th>Department</th><th>Level</th><th>Term</th><th>Subjects</th><th>GPA</th><th>Action</th></tr></thead>
+      <tbody id="r-students-body"></tbody>
+    </table>
+  </div>
+
+  <!-- Result Sheet -->
+  <div id="r-sheet-wrap" style="display:none;margin-top:1rem;">
+    <div style="display:flex;gap:10px;margin-bottom:1rem;" class="no-print">
+      <button class="btn btn-ghost" onclick="closeResultSheet()">✖ Close</button>
+      <button class="btn btn-primary" onclick="printResultSheet()">🖨️ Print / PDF</button>
+      <button class="btn btn-success btn-sm" onclick="generateStudentLink(currentResultReg)">🔗 Generate Link</button>
+    </div>
+    <div id="r-sheet-content" class="result-sheet"></div>
+    <div id="student-link-box" style="display:none;margin-top:1rem;"></div>
+  </div>
+</section>
+
+<!-- ============================================================
+     ADMIN PANEL
+     ============================================================ -->
+<section id="admin">
+  <!-- School Settings -->
+  <div class="panel">
+    <div class="panel-title">🏫 <span>School Settings</span></div>
+    <div class="form-grid">
+      <div class="form-group full">
+        <label>School Name</label>
+        <input type="text" id="a-name" placeholder="Full school name"/>
+      </div>
+      <div class="form-group">
+        <label>Current Session</label>
+        <input type="text" id="a-session" placeholder="e.g. 2024/2025"/>
+      </div>
+      <div class="form-group">
+        <label>Current Term</label>
+        <select id="a-term">
+          <option value="First Term">First Term</option>
+          <option value="Second Term">Second Term</option>
+          <option value="Third Term">Third Term</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label>Principal Name</label>
+        <input type="text" id="a-principal" placeholder="Principal's name"/>
+      </div>
+      <div class="form-group">
+        <label>Admin Password</label>
+        <input type="password" id="a-admin-pass" placeholder="Change admin password"/>
+      </div>
+    </div>
+    <button class="btn btn-primary" onclick="saveAdminSettings()">Save Settings</button>
+  </div>
+
+  <!-- Departments -->
+  <div class="panel">
+    <div class="panel-title">🏛️ <span>Departments / Classes</span>
+      <button class="btn btn-primary btn-sm" style="margin-left:auto;" onclick="toggleAddDept()">+ Add Dept</button>
+    </div>
+    <div id="add-dept-form" style="display:none;margin-bottom:1rem;">
+      <div class="form-grid">
+        <div class="form-group">
+          <label>Department ID</label>
+          <input type="text" id="d-id" placeholder="e.g. ELE"/>
+        </div>
+        <div class="form-group">
+          <label>Department Name</label>
+          <input type="text" id="d-name" placeholder="Full department name"/>
+        </div>
+        <div class="form-group">
+          <label>HOD Password</label>
+          <input type="text" id="d-pass" placeholder="HOD login password"/>
+        </div>
+      </div>
+      <button class="btn btn-primary" onclick="addDept()">Add Department</button>
+    </div>
+    <div class="tbl-wrap">
+      <table>
+        <thead><tr><th>ID</th><th>Name</th><th>Students</th><th>HOD Pass</th><th>Action</th></tr></thead>
+        <tbody id="admin-dept-body"></tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- Result Links Manager -->
+  <div class="panel">
+    <div class="panel-title">🔗 <span>Student Result Links</span></div>
+    <p style="font-size:0.8rem;color:var(--muted);margin-bottom:1rem;">
+      Generate secure links for students to access their results. 
+      Deactivate links to restrict access for fee defaulters.
+    </p>
+    <div class="form-grid">
+      <div class="form-group">
+        <label>Filter by Department</label>
+        <select id="link-dept" onchange="renderLinksTable()">
+          <option value="">All Departments</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label>Filter by Term</label>
+        <select id="link-term" onchange="renderLinksTable()">
+          <option value="">All Terms</option>
+          <option value="First Term">First Term</option>
+          <option value="Second Term">Second Term</option>
+          <option value="Third Term">Third Term</option>
+        </select>
+      </div>
+    </div>
+    <div style="margin-bottom:1rem;display:flex;gap:8px;flex-wrap:wrap;">
+      <button class="btn btn-success btn-sm" onclick="generateAllLinks()">🔗 Generate All Links</button>
+      <button class="btn btn-danger btn-sm" onclick="deactivateAllLinks()">🚫 Deactivate All</button>
+    </div>
+    <div class="tbl-wrap">
+      <table>
+        <thead><tr><th>Reg No</th><th>Name</th><th>Term</th><th>Link Status</th><th>Action</th></tr></thead>
+        <tbody id="links-table-body"></tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- Broadsheet Download -->
+  <div class="panel">
+    <div class="panel-title">📊 <span>Download Broadsheet</span></div>
+    <div class="form-grid">
+      <div class="form-group">
+        <label>Department</label>
+        <select id="bs-dept"><option value="">All</option></select>
+      </div>
+      <div class="form-group">
+        <label>Term</label>
+        <select id="bs-term">
+          <option value="First Term">First Term</option>
+          <option value="Second Term">Second Term</option>
+          <option value="Third Term">Third Term</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label>Session</label>
+        <input type="text" id="bs-session" placeholder="e.g. 2024/2025"/>
+      </div>
+    </div>
+    <button class="btn btn-primary" onclick="downloadBroadsheet()">⬇️ Download CSV Broadsheet</button>
+  </div>
+
+  <!-- Data Management -->
+  <div class="panel">
+    <div class="panel-title">💾 <span>Data Management</span></div>
+    <div style="display:flex;gap:8px;flex-wrap:wrap;">
+      <button class="btn btn-ghost btn-sm" onclick="exportData()">⬇️ Export Backup</button>
+      <button class="btn btn-ghost btn-sm" onclick="document.getElementById('import-file').click()">⬆️ Import Data</button>
+      <button class="btn btn-danger btn-sm" onclick="confirmClearResults()">🗑️ Clear Term Results</button>
+    </div>
+    <input type="file" id="import-file" accept=".json" style="display:none" onchange="importData(event)"/>
+  </div>
+</section>
+
+<!-- ============================================================
+     STUDENT RESULT VIEW (via link)
+     ============================================================ -->
+<section id="student-view">
+  <div id="student-result-content"></div>
+</section>
+
+</main>
+</div><!-- end main-app -->
+
+<!-- SUPER ADMIN MODAL -->
+<div id="super-admin-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.8);z-index:200;display:none;align-items:center;justify-content:center;padding:1rem;">
+  <div style="background:var(--card);border:1px solid var(--border);border-radius:16px;padding:1.5rem;width:100%;max-width:400px;">
+    <h3 style="font-family:var(--serif);margin-bottom:1rem;color:var(--gold);">🔐 Rehoteq Super Admin</h3>
+    <div class="form-group" style="margin-bottom:10px;">
+      <label>Master Password</label>
+      <input type="password" id="sa-pass" placeholder="Enter master password"/>
+    </div>
+    <div style="display:flex;gap:8px;">
+      <button class="btn btn-primary" onclick="superAdminLogin()">Login</button>
+      <button class="btn btn-ghost" onclick="closeSuperAdmin()">Cancel</button>
+    </div>
+  </div>
+</div>
+
+<!-- TOAST -->
+<div id="toast"></div>
+
+<script>
+// ============================================================
+// CONSTANTS & CONFIG
+// ============================================================
+const SUPER_ADMIN_PASS = 'rehoteq@superadmin2025';
+const BASE_URL = 'https://rehoteq1-coder.github.io/rms/';
+
+// Firebase configs per school
+const SCHOOL_CONFIGS = {};
+
+// Current state
+let SCHOOL_ID = '';
+let DB_REF = null;
+let LIVE = { students:{}, subjects:{}, results:{}, settings:{}, departments:{}, links:{} };
+let CURRENT = { role:'', name:'', dept:'' };
+let currentResultReg = '';
+
+// ============================================================
+// UTILITY FUNCTIONS
+// ============================================================
+function uid(){
+  return Date.now().toString(36) + Math.random().toString(36).substr(2,9);
+}
+
+function toast(msg, type='success'){
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.className = 'show ' + type;
+  setTimeout(()=>{ t.className = ''; }, 3000);
+}
+
+function toArr(obj){
+  return obj ? Object.entries(obj).map(([k,v])=>({...v, _key:k})) : [];
+}
+
+function calcGrade(total){
+  if(total >= 70) return 'A';
+  if(total >= 60) return 'B';
+  if(total >= 50) return 'C';
+  if(total >= 45) return 'D';
+  return 'F';
+}
+
+function calcGP(grade){
+  return {A:5, B:4, C:3, D:2, F:0}[grade] || 0;
+}
+
+function getStudents(){ return toArr(LIVE.students); }
+function getSubjects(){ return toArr(LIVE.subjects); }
+function getResults(){ return toArr(LIVE.results); }
+function getDepts(){ return toArr(LIVE.departments); }
+function getSettings(){ return LIVE.settings || {}; }
+function getLinks(){ return toArr(LIVE.links); }
+
+// ============================================================
+// CUMULATIVE SCORE CALCULATION
+// ============================================================
+function calcCumulativeTotal(rawTotal, prevGrandTotal, term){
+  if(term === 'First Term') return rawTotal;
+  if(term === 'Second Term'){
+    if(prevGrandTotal === null) return rawTotal;
+    return Math.round(((rawTotal + prevGrandTotal) / 2) * 100) / 100;
+  }
+  if(term === 'Third Term'){
+    if(prevGrandTotal === null) return rawTotal;
+    return Math.round(((rawTotal + prevGrandTotal) / 2) * 100) / 100;
+  }
+  return rawTotal;
+}
+
+function getPrevTermGrandTotal(studentReg, subjectCode, currentTerm, session){
+  const results = getResults();
+  let prevTerm = null;
+  if(currentTerm === 'Second Term') prevTerm = 'First Term';
+  if(currentTerm === 'Third Term') prevTerm = 'Second Term';
+  if(!prevTerm) return null;
+
+  const prevResult = results.find(r =>
+    r.studentReg === studentReg &&
+    r.subjectCode === subjectCode &&
+    r.term === prevTerm &&
+    r.session === session
+  );
+  return prevResult ? (prevResult.grandTotal || prevResult.total || null) : null;
+}
+
+// ============================================================
+// SCHOOL LOADING
+// ============================================================
+function loadSchoolInfo(){
+  const schoolId = document.getElementById('login-school-id').value.trim().toUpperCase();
+  if(!schoolId) return;
+
+  // Try to find school config from master DB
+  // For now show school ID
+  const display = document.getElementById('school-name-display');
+  display.style.display = 'block';
+  display.textContent = '✓ School ID: ' + schoolId;
+  SCHOOL_ID = schoolId;
+}
+
+function initFirebase(config, schoolId){
+  try{
+    // Check if already initialized for this school
+    const appName = 'school-' + schoolId;
+    let app;
+    try{
+      app = firebase.app(appName);
+    } catch(e){
+      app = firebase.initializeApp(config, appName);
+    }
+    DB_REF = firebase.database(app).ref('rms');
+
+    // Listen to all data
+    DB_REF.child('students').on('value', snap => {
+      LIVE.students = snap.val() || {};
+      refreshUI();
+    });
+    DB_REF.child('subjects').on('value', snap => {
+      LIVE.subjects = snap.val() || {};
+    });
+    DB_REF.child('results').on('value', snap => {
+      LIVE.results = snap.val() || {};
+    });
+    DB_REF.child('settings').on('value', snap => {
+      LIVE.settings = snap.val() || {};
+      updateSettingsUI();
+    });
+    DB_REF.child('departments').on('value', snap => {
+      LIVE.departments = snap.val() || {};
+      refreshUI();
+    });
+    DB_REF.child('links').on('value', snap => {
+      LIVE.links = snap.val() || {};
+    });
+
+    // Sync status
+    firebase.database(app).ref('.info/connected').on('value', snap => {
+      const connected = snap.val();
+      document.getElementById('sync-dot').className = 'sync-dot ' + (connected ? 'on' : '');
+      document.getElementById('sync-text').textContent = connected ? 'Live Sync' : 'Offline';
+    });
+
+    return true;
+  } catch(err){
+    console.error('Firebase init error:', err);
+    return false;
+  }
+}
+
+// ============================================================
+// LOGIN
+// ============================================================
+let selectedRole = 'admin';
+
+function selectRole(role, el){
+  selectedRole = role;
+  document.querySelectorAll('.role-btn').forEach(b => b.classList.remove('active'));
+  el.classList.add('active');
+
+  // Show/hide fields
+  const deptField = document.getElementById('dept-field');
+  const passField = document.getElementById('pass-field');
+  const userLabel = document.getElementById('username-label');
+
+  if(role === 'student'){
+    deptField.style.display = 'none';
+    passField.style.display = 'none';
+    userLabel.textContent = 'Reg Number / Full Name';
+    document.getElementById('login-user').placeholder = 'Enter your reg number or name';
+  } else if(role === 'hod'){
+    deptField.style.display = 'block';
+    passField.style.display = 'block';
+    userLabel.textContent = 'Your Name';
+    document.getElementById('login-pass').placeholder = 'HOD Password (last name)';
+  } else {
+    deptField.style.display = 'none';
+    passField.style.display = 'block';
+    userLabel.textContent = 'Your Name';
+    document.getElementById('login-pass').placeholder = role === 'admin' ? 'Admin password' : 'Teacher password';
+  }
+}
+
+function doLogin(){
+  const schoolId = document.getElementById('login-school-id').value.trim().toUpperCase();
+  const user = document.getElementById('login-user').value.trim();
+  const pass = document.getElementById('login-pass').value.trim();
+
+  if(!schoolId){ toast('Please enter School ID', 'error'); return; }
+  if(!user){ toast('Please enter your name', 'error'); return; }
+
+  SCHOOL_ID = schoolId;
+
+  // For demo/testing — use GTC Firebase config or embedded config
+  // In production each school has their own config stored in master DB
+  const config = getSchoolConfig(schoolId);
+
+  if(selectedRole === 'admin'){
+    const adminPass = (LIVE.settings && LIVE.settings.adminPass) || 'admin123';
+    if(pass !== adminPass){ toast('Wrong admin password', 'error'); return; }
+    CURRENT = { role:'admin', name:user, dept:'' };
+  } else if(selectedRole === 'hod'){
+    const dept = document.getElementById('login-dept').value;
+    const depts = getDepts();
+    const deptObj = depts.find(d => d.id === dept);
+    if(!deptObj){ toast('Select a department', 'error'); return; }
+    const hodPass = deptObj.hodPass || user.toLowerCase().split(' ')[0];
+    if(pass.toLowerCase() !== hodPass.toLowerCase()){ toast('Wrong HOD password', 'error'); return; }
+    CURRENT = { role:'hod', name:user, dept:dept };
+  } else if(selectedRole === 'teacher'){
+    const teacherPass = (LIVE.settings && LIVE.settings.teacherPass) || 'teacher123';
+    if(pass !== teacherPass){ toast('Wrong teacher password', 'error'); return; }
+    CURRENT = { role:'teacher', name:user, dept:'' };
+  } else if(selectedRole === 'student'){
+    CURRENT = { role:'student', name:user, dept:'' };
+  }
+
+  // Init Firebase
+  if(config){
+    initFirebase(config, schoolId);
+  }
+
+  afterLogin();
+}
+
+function getSchoolConfig(schoolId){
+  // Each school's Firebase config is stored here
+  // In production, this comes from master Rehoteq database
+  const configs = {
+    'RMS-0001': {
+      apiKey: "AIzaSyAlGrnex8GCd6Ciw_cggrEiA9nhSnEfFMU",
+      authDomain: "gtc-okitipupa.firebaseapp.com",
+      databaseURL: "https://gtc-okitipupa-default-rtdb.firebaseio.com",
+      projectId: "gtc-okitipupa",
+      appId: "1:822961195945:web:a05839b2d488bec61792b8"
+    }
+    // More schools added here as they subscribe
+  };
+  return configs[schoolId] || null;
+}
+
+function afterLogin(){
+  document.getElementById('login-page').style.display = 'none';
+  document.getElementById('main-app').style.display = 'block';
+
+  // Show nav based on role
+  if(CURRENT.role === 'admin'){
+    document.getElementById('nav-hod').style.display = 'block';
+    document.getElementById('nav-teacher').style.display = 'block';
+    document.getElementById('nav-admin').style.display = 'block';
+    document.getElementById('dash-hod-btn').style.display = 'block';
+    document.getElementById('dash-admin-btn').style.display = 'block';
+  } else if(CURRENT.role === 'hod'){
+    document.getElementById('nav-hod').style.display = 'block';
+    document.getElementById('dash-hod-btn').style.display = 'block';
+  } else if(CURRENT.role === 'teacher'){
+    document.getElementById('nav-teacher').style.display = 'block';
+  }
+
+  document.getElementById('header-school-name').textContent = SCHOOL_ID;
+  document.getElementById('school-badge').textContent = CURRENT.role.toUpperCase();
+  document.getElementById('school-badge').style.display = 'block';
+
+  populateAllSelects();
+  refreshUI();
+  checkPaymentStatus();
+}
+
+function logout(){
+  CURRENT = { role:'', name:'', dept:'' };
+  DB_REF = null;
+  LIVE = { students:{}, subjects:{}, results:{}, settings:{}, departments:{}, links:{} };
+  document.getElementById('main-app').style.display = 'none';
+  document.getElementById('login-page').style.display = 'flex';
+}
+
+// ============================================================
+// REFRESH UI
+// ============================================================
+function refreshUI(){
+  const students = getStudents();
+  const subjects = getSubjects();
+  const results = getResults();
+  const depts = getDepts();
+
+  // Dashboard stats
+  document.getElementById('ds-students').textContent = students.length;
+  document.getElementById('ds-subjects').textContent = subjects.length;
+  document.getElementById('ds-results').textContent = results.length;
+  const settings = getSettings();
+  document.getElementById('ds-term').textContent = (settings.term || 'First Term').replace(' Term','');
+
+  // Render HOD tables
+  if(CURRENT.role === 'hod' || CURRENT.role === 'admin'){
+    renderHODStudents();
+    renderHODSubjects();
+  }
+
+  // Admin dept table
+  if(CURRENT.role === 'admin'){
+    renderAdminDepts();
+    renderLinksTable();
+    renderAdminStats();
+    populateAllSelects();
+  }
+}
+
+function updateSettingsUI(){
+  const s = getSettings();
+  if(document.getElementById('a-name')) document.getElementById('a-name').value = s.name || '';
+  if(document.getElementById('a-session')) document.getElementById('a-session').value = s.session || '';
+  if(document.getElementById('a-term')) document.getElementById('a-term').value = s.term || 'First Term';
+  if(document.getElementById('a-principal')) document.getElementById('a-principal').value = s.principal || '';
+  if(document.getElementById('t-session')) document.getElementById('t-session').value = s.session || '';
+
+  // Term info
+  const info = document.getElementById('term-info-content');
+  if(info){
+    info.innerHTML = `
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;font-size:0.82rem;">
+        <div><span style="color:var(--muted)">School:</span> <strong>${s.name || '-'}</strong></div>
+        <div><span style="color:var(--muted)">Session:</span> <strong>${s.session || '-'}</strong></div>
+        <div><span style="color:var(--muted)">Term:</span> <strong style="color:var(--gold)">${s.term || '-'}</strong></div>
+        <div><span style="color:var(--muted)">Principal:</span> <strong>${s.principal || '-'}</strong></div>
+      </div>`;
+  }
+}
+
+// ============================================================
+// POPULATE SELECTS
+// ============================================================
+function populateAllSelects(){
+  const depts = getDepts();
+  const deptSelects = ['t-dept', 'r-dept', 'link-dept', 'bs-dept', 'login-dept'];
+  deptSelects.forEach(id => {
+    const el = document.getElementById(id);
+    if(!el) return;
+    const cur = el.value;
+    el.innerHTML = id === 'login-dept'
+      ? '<option value="">Select Department</option>'
+      : '<option value="">All Departments</option>';
+    depts.forEach(d => {
+      el.innerHTML += `<option value="${d.id}">${d.name || d.id}</option>`;
+    });
+    if(cur) el.value = cur;
+  });
+}
+
+// ============================================================
+// SECTION NAVIGATION
+// ============================================================
+function showSection(id, btn){
+  document.querySelectorAll('section').forEach(s => s.classList.remove('active'));
+  document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
+  const sec = document.getElementById(id);
+  if(sec) sec.classList.add('active');
+  if(btn) btn.classList.add('active');
+
+  if(id === 'teacher') loadTeacherSubjects();
+  if(id === 'results') searchResults();
+  if(id === 'admin'){ renderAdminDepts(); renderLinksTable(); renderAdminStats(); }
+}
+
+// ============================================================
+// HOD — ADD STUDENT
+// ============================================================
+function toggleAddStudent(){
+  const f = document.getElementById('add-student-form');
+  f.style.display = f.style.display === 'none' ? 'block' : 'none';
+}
+function toggleAddSubject(){
+  const f = document.getElementById('add-subject-form');
+  f.style.display = f.style.display === 'none' ? 'block' : 'none';
+}
+function toggleAddDept(){
+  const f = document.getElementById('add-dept-form');
+  f.style.display = f.style.display === 'none' ? 'block' : 'none';
+}
+
+function addStudent(){
+  const reg = document.getElementById('h-reg').value.trim();
+  const name = document.getElementById('h-name').value.trim();
+  const gender = document.getElementById('h-gender').value;
+  const level = document.getElementById('h-level').value;
+  const dept = CURRENT.dept || (getDepts()[0] ? getDepts()[0].id : '');
+
+  if(!reg || !name){ toast('Fill all fields', 'error'); return; }
+
+  const student = { reg, name, gender, level, dept, addedBy:CURRENT.name, addedAt:Date.now() };
+
+  if(DB_REF){
+    DB_REF.child('students').child(reg.replace(/[^a-zA-Z0-9]/g,'_')).set(student);
+  }
+  toast('Student added!');
+  document.getElementById('h-reg').value = '';
+  document.getElementById('h-name').value = '';
+}
+
+function addSubject(){
+  const code = document.getElementById('s-code').value.trim();
+  const title = document.getElementById('s-title').value.trim();
+  const units = parseInt(document.getElementById('s-units').value);
+  const level = document.getElementById('s-level').value;
+  const dept = CURRENT.dept || (getDepts()[0] ? getDepts()[0].id : '');
+
+  if(!code || !title){ toast('Fill all fields', 'error'); return; }
+
+  const subject = { code, title, units, level, dept, addedBy:CURRENT.name };
+
+  if(DB_REF){
+    DB_REF.child('subjects').child(code.replace(/[^a-zA-Z0-9]/g,'_')).set(subject);
+  }
+  toast('Subject added!');
+  document.getElementById('s-code').value = '';
+  document.getElementById('s-title').value = '';
+}
+
+function addDept(){
+  const id = document.getElementById('d-id').value.trim().toUpperCase();
+  const name = document.getElementById('d-name').value.trim();
+  const pass = document.getElementById('d-pass').value.trim();
+
+  if(!id || !name){ toast('Fill all fields', 'error'); return; }
+
+  const dept = { id, name, hodPass:pass };
+  if(DB_REF){
+    DB_REF.child('departments').child(id).set(dept);
+  }
+  toast('Department added!');
+  document.getElementById('d-id').value = '';
+  document.getElementById('d-name').value = '';
+  document.getElementById('d-pass').value = '';
+}
+
+// ============================================================
+// RENDER HOD TABLES
+// ============================================================
+function renderHODStudents(){
+  const tbody = document.getElementById('hod-students-body');
+  if(!tbody) return;
+  const students = CURRENT.role === 'hod'
+    ? getStudents().filter(s => s.dept === CURRENT.dept)
+    : getStudents();
+
+  tbody.innerHTML = students.length === 0
+    ? '<tr><td colspan="5" style="text-align:center;color:var(--muted);padding:2rem;">No students yet</td></tr>'
+    : students.map(s => `
+      <tr>
+        <td><span style="font-family:var(--mono);font-size:0.78rem;">${s.reg}</span></td>
+        <td>${s.name}</td>
+        <td>${s.level}</td>
+        <td>${s.gender}</td>
+        <td><button class="btn btn-danger btn-sm" onclick="removeStudent('${s._key}')">Remove</button></td>
+      </tr>`).join('');
+}
+
+function renderHODSubjects(){
+  const tbody = document.getElementById('hod-subjects-body');
+  if(!tbody) return;
+  const subjects = CURRENT.role === 'hod'
+    ? getSubjects().filter(s => s.dept === CURRENT.dept)
+    : getSubjects();
+
+  tbody.innerHTML = subjects.length === 0
+    ? '<tr><td colspan="5" style="text-align:center;color:var(--muted);padding:2rem;">No subjects yet</td></tr>'
+    : subjects.map(s => `
+      <tr>
+        <td><span style="font-family:var(--mono);">${s.code}</span></td>
+        <td>${s.title}</td>
+        <td>${s.units}</td>
+        <td>${s.level || 'All'}</td>
+        <td><button class="btn btn-danger btn-sm" onclick="removeSubject('${s._key}')">Remove</button></td>
+      </tr>`).join('');
+}
+
+function renderAdminDepts(){
+  const tbody = document.getElementById('admin-dept-body');
+  if(!tbody) return;
+  const depts = getDepts();
+  const students = getStudents();
+
+  tbody.innerHTML = depts.length === 0
+    ? '<tr><td colspan="5" style="text-align:center;color:var(--muted);">No departments yet</td></tr>'
+    : depts.map(d => `
+      <tr>
+        <td><span style="font-family:var(--mono);">${d.id}</span></td>
+        <td>${d.name}</td>
+        <td>${students.filter(s => s.dept === d.id).length}</td>
+        <td><span style="font-family:var(--mono);font-size:0.75rem;color:var(--muted);">${d.hodPass || '-'}</span></td>
+        <td><button class="btn btn-danger btn-sm" onclick="removeDept('${d._key}')">Remove</button></td>
+      </tr>`).join('');
+}
+
+function renderAdminStats(){
+  // Populate broadsheet dept dropdown too
+  populateAllSelects();
+}
+
+function removeStudent(key){
+  if(!confirm('Remove this student?')) return;
+  if(DB_REF) DB_REF.child('students').child(key).remove();
+  toast('Student removed');
+}
+
+function removeSubject(key){
+  if(!confirm('Remove this subject?')) return;
+  if(DB_REF) DB_REF.child('subjects').child(key).remove();
+  toast('Subject removed');
+}
+
+function removeDept(key){
+  if(!confirm('Remove this department?')) return;
+  if(DB_REF) DB_REF.child('departments').child(key).remove();
+  toast('Department removed');
+}
+
+// ============================================================
+// SCORE ENTRY
+// ============================================================
+function loadTeacherSubjects(){
+  const dept = document.getElementById('t-dept').value;
+  const subSelect = document.getElementById('t-subject');
+  subSelect.innerHTML = '<option value="">Select Subject</option>';
+
+  if(!dept) return;
+
+  const subjects = getSubjects().filter(s => s.dept === dept);
+  subjects.forEach(s => {
+    subSelect.innerHTML += `<option value="${s.code}">${s.code} — ${s.title}</option>`;
+  });
+}
+
+function loadStudentsForScoring(){
+  const dept = document.getElementById('t-dept').value;
+  const subCode = document.getElementById('t-subject').value;
+  const term = document.getElementById('t-term').value;
+  const session = document.getElementById('t-session').value;
+
+  document.getElementById('t-score-panel').style.display = 'none';
+  if(!dept || !subCode) return;
+
+  const sub = getSubjects().find(s => s.code === subCode && s.dept === dept);
+  if(!sub) return;
+
+  document.getElementById('t-subject-label').textContent = `${sub.code} — ${sub.title}`;
+
+  // Term badge
+  const termBadge = document.getElementById('t-term-badge');
+  termBadge.textContent = term;
+  termBadge.className = 'badge ' + (term==='First Term'?'badge-t1':term==='Second Term'?'badge-t2':'badge-t3');
+
+  // Cumulative info
+  const cumInfo = document.getElementById('t-cumulative-info');
+  const cumText = document.getElementById('t-cumulative-text');
+  const grandHeader = document.getElementById('t-grand-header');
+
+  if(term === 'First Term'){
+    cumInfo.style.display = 'none';
+    grandHeader.textContent = 'Total (T1)';
+  } else if(term === 'Second Term'){
+    cumInfo.style.display = 'flex';
+    cumText.textContent = 'Grand Total = (This Term Raw + Term 1 Total) ÷ 2';
+    grandHeader.textContent = 'Grand Total (T2)';
+  } else if(term === 'Third Term'){
+    cumInfo.style.display = 'flex';
+    cumText.textContent = 'Grand Total = (This Term Raw + Term 2 Grand Total) ÷ 2';
+    grandHeader.textContent = 'Grand Total (T3)';
+  }
+
+  let students = getStudents().filter(s => s.dept === dept);
+  if(sub.level) students = students.filter(s => s.level === sub.level);
+
+  const results = getResults();
+  const tbody = document.getElementById('t-score-body');
+
+  if(!students.length){
+    tbody.innerHTML = '<tr><td colspan="9" style="text-align:center;color:var(--muted);padding:2rem;">No students found</td></tr>';
+    document.getElementById('t-score-panel').style.display = 'block';
+    return;
+  }
+
+  window._scoringStudents = students;
+  window._scoringSubject = sub;
+
+  tbody.innerHTML = students.map((s, i) => {
+    const existing = results.find(r =>
+      r.studentReg === s.reg && r.subjectCode === subCode &&
+      r.term === term && r.session === session
+    );
+
+    // Get previous term grand total for cumulative display
+    const prevGT = getPrevTermGrandTotal(s.reg, subCode, term, session);
+
+    const t1 = existing ? existing.t1 : '';
+    const t2 = existing ? existing.t2 : '';
+    const t3 = existing ? existing.t3 : '';
+    const exam = existing ? existing.exam : '';
+    const rawTotal = existing ? existing.total : '-';
+    const grandTotal = existing ? (existing.grandTotal || existing.total) : '-';
+    const grade = existing ? existing.grade : '-';
+
+    return `<tr id="trow-${i}">
+      <td><span style="font-family:var(--mono);font-size:0.75rem;">${s.reg}</span></td>
+      <td style="font-size:0.82rem;">${s.name}</td>
+      <td><input type="number" min="0" max="10" placeholder="0-10" value="${t1}" id="tt1-${i}" oninput="calcTRow(${i},${JSON.stringify(prevGT)},${JSON.stringify(term)})"/></td>
+      <td><input type="number" min="0" max="10" placeholder="0-10" value="${t2}" id="tt2-${i}" oninput="calcTRow(${i},${JSON.stringify(prevGT)},${JSON.stringify(term)})"/></td>
+      <td><input type="number" min="0" max="10" placeholder="0-10" value="${t3}" id="tt3-${i}" oninput="calcTRow(${i},${JSON.stringify(prevGT)},${JSON.stringify(term)})"/></td>
+      <td><input type="number" min="0" max="70" placeholder="0-70" value="${exam}" id="tex-${i}" oninput="calcTRow(${i},${JSON.stringify(prevGT)},${JSON.stringify(term)})"/></td>
+      <td class="total-cell" id="traw-${i}">${rawTotal}</td>
+      <td class="grand-total-cell" id="tgt-${i}">${grandTotal}</td>
+      <td id="tgr-${i}" style="font-weight:700;">${grade}</td>
+    </tr>`;
+  }).join('');
+
+  document.getElementById('t-score-panel').style.display = 'block';
+}
+
+function calcTRow(i, prevGT, term){
+  const t1 = parseFloat(document.getElementById('tt1-'+i)?.value) || 0;
+  const t2 = parseFloat(document.getElementById('tt2-'+i)?.value) || 0;
+  const t3 = parseFloat(document.getElementById('tt3-'+i)?.value) || 0;
+  const ex = parseFloat(document.getElementById('tex-'+i)?.value) || 0;
+  const raw = t1 + t2 + t3 + ex;
+  const grandTotal = calcCumulativeTotal(raw, prevGT, term);
+  const grade = calcGrade(grandTotal);
+
+  document.getElementById('traw-'+i).textContent = raw;
+  document.getElementById('tgt-'+i).textContent = grandTotal;
+  document.getElementById('tgr-'+i).textContent = grade;
+  document.getElementById('tgr-'+i).style.color = grade === 'A' ? 'var(--green)' : grade === 'F' ? 'var(--red)' : 'var(--gold)';
+}
+
+function submitTeacherScores(){
+  const students = window._scoringStudents || [];
+  const sub = window._scoringSubject;
+  const term = document.getElementById('t-term').value;
+  const session = document.getElementById('t-session').value;
+  const dept = document.getElementById('t-dept').value;
+
+  if(!sub || !students.length){ toast('No students loaded', 'error'); return; }
+  if(!session){ toast('Please enter session (e.g. 2024/2025)', 'error'); return; }
+
+  const batchUpdate = {};
+  let saved = 0;
+
+  students.forEach((s, i) => {
+    const t1v = document.getElementById('tt1-'+i)?.value;
+    const t2v = document.getElementById('tt2-'+i)?.value;
+    const t3v = document.getElementById('tt3-'+i)?.value;
+    const exv = document.getElementById('tex-'+i)?.value;
+
+    if(t1v===''&&t2v===''&&t3v===''&&exv==='') return;
+
+    const t1 = parseFloat(t1v)||0;
+    const t2 = parseFloat(t2v)||0;
+    const t3 = parseFloat(t3v)||0;
+    const ex = parseFloat(exv)||0;
+    const rawTotal = t1+t2+t3+ex;
+
+    // Get previous term grand total for cumulative
+    const prevGT = getPrevTermGrandTotal(s.reg, sub.code, term, session);
+    const grandTotal = calcCumulativeTotal(rawTotal, prevGT, term);
+    const grade = calcGrade(grandTotal);
+    const units = sub.units || 2;
+
+    const result = {
+      studentReg: s.reg,
+      studentName: s.name,
+      dept,
+      subjectCode: sub.code,
+      subjectTitle: sub.title,
+      level: s.level,
+      units,
+      t1, t2, t3,
+      ca: t1+t2+t3,
+      exam: ex,
+      total: rawTotal,
+      grandTotal,
+      grade,
+      gp: calcGP(grade),
+      wgp: calcGP(grade) * units,
+      teacher: CURRENT.name,
+      term,
+      session,
+      savedAt: Date.now()
+    };
+
+    // Unique key per student per subject per term per session
+    const key = (s.reg + '_' + sub.code + '_' + term + '_' + session)
+      .replace(/[^a-zA-Z0-9]/g, '_');
+
+    batchUpdate['results/' + key] = result;
+    saved++;
+  });
+
+  if(DB_REF && Object.keys(batchUpdate).length > 0){
+    DB_REF.update(batchUpdate)
+      .then(() => toast(saved + ' score(s) saved! ✅'))
+      .catch(err => toast('Error: ' + err.message, 'error'));
+  } else {
+    toast(saved + ' score(s) ready', 'success');
+  }
+}
+
+function clearScores(){
+  const tbody = document.getElementById('t-score-body');
+  tbody.querySelectorAll('input').forEach(inp => inp.value = '');
+  toast('Scores cleared');
+}
+
+// ============================================================
+// RESULTS VIEW
+// ============================================================
+function searchResults(){
+  const dept = document.getElementById('r-dept').value;
+  const term = document.getElementById('r-term').value;
+  const session = document.getElementById('r-session').value;
+
+  let students = getStudents();
+  if(dept) students = students.filter(s => s.dept === dept);
+
+  const results = getResults();
+  const tbody = document.getElementById('r-students-body');
+
+  const filtered = students.filter(s => {
+    let recs = results.filter(r => r.studentReg === s.reg);
+    if(term) recs = recs.filter(r => r.term === term);
+    if(session) recs = recs.filter(r => r.session === session);
+    return recs.length > 0;
+  });
+
+  if(!filtered.length){
+    tbody.innerHTML = '<tr><td colspan="8" style="text-align:center;color:var(--muted);padding:2rem;">No results found</td></tr>';
+    return;
+  }
+
+  tbody.innerHTML = filtered.map(s => {
+    let recs = results.filter(r => r.studentReg === s.reg);
+    if(term) recs = recs.filter(r => r.term === term);
+    if(session) recs = recs.filter(r => r.session === session);
+
+    const totalUnits = recs.reduce((a,r) => a+(r.units||2), 0);
+    const totalWGP = recs.reduce((a,r) => a+(r.wgp||0), 0);
+    const gpa = totalUnits ? (totalWGP/totalUnits).toFixed(2) : '-';
+    const termLabel = term || (recs[0] ? recs[0].term : '-');
+    const dept = getDepts().find(d => d.id === s.dept);
+
+    return `<tr>
+      <td><span style="font-family:var(--mono);font-size:0.75rem;">${s.reg}</span></td>
+      <td>${s.name}</td>
+      <td>${dept ? dept.name : s.dept}</td>
+      <td>${s.level}</td>
+      <td><span class="badge ${termLabel==='First Term'?'badge-t1':termLabel==='Second Term'?'badge-t2':'badge-t3'}">${termLabel}</span></td>
+      <td>${recs.length}</td>
+      <td style="font-family:var(--mono);color:var(--gold);">${gpa}</td>
+      <td><button class="btn btn-primary btn-sm" onclick="viewStudentResult('${s.reg}','${term}','${session}')">View</button></td>
+    </tr>`;
+  }).join('');
+}
+
+function viewStudentResult(reg, term, session){
+  const student = getStudents().find(s => s.reg === reg);
+  if(!student){ toast('Student not found', 'error'); return; }
+
+  let records = getResults().filter(r => r.studentReg === reg);
+  if(term) records = records.filter(r => r.term === term);
+  if(session) records = records.filter(r => r.session === session);
+
+  if(!records.length){ toast('No results found', 'error'); return; }
+
+  currentResultReg = reg;
+  const settings = getSettings();
+  const dept = getDepts().find(d => d.id === student.dept);
+  const termLabel = term || (records[0] ? records[0].term : '');
+  const sessionLabel = session || (records[0] ? records[0].session : '');
+
+  const totalUnits = records.reduce((a,r) => a+(r.units||2), 0);
+  const totalWGP = records.reduce((a,r) => a+(r.wgp||0), 0);
+  const gpa = totalUnits ? (totalWGP/totalUnits).toFixed(2) : '0.00';
+  const avg = records.length ? Math.round(records.reduce((a,r) => a+(r.grandTotal||r.total||0), 0)/records.length) : 0;
+
+  const makeRows = recs => recs.map(r => `
+    <tr>
+      <td>${r.subjectCode}</td>
+      <td>${r.subjectTitle}</td>
+      <td>${r.units||2}</td>
+      <td>${r.t1??'-'}</td>
+      <td>${r.t2??'-'}</td>
+      <td>${r.t3??'-'}</td>
+      <td>${r.ca??'-'}</td>
+      <td>${r.exam??'-'}</td>
+      <td>${r.total??'-'}</td>
+      <td style="color:${r.term==='First Term'?'#0a0f2c':'#0a0f2c'};font-weight:700;">${r.grandTotal||r.total}</td>
+      <td><strong>${r.grade}</strong></td>
+      <td>${r.gp||calcGP(r.grade)}</td>
+      <td>${r.wgp||(calcGP(r.grade)*(r.units||2))}</td>
+    </tr>`).join('');
+
+  const cumulativeNote = termLabel === 'First Term' ? ''
+    : termLabel === 'Second Term' ? '<div style="font-size:11px;color:#888;margin-top:8px;">Grand Total = (This Term + Term 1) ÷ 2</div>'
+    : '<div style="font-size:11px;color:#888;margin-top:8px;">Grand Total = (This Term + Term 2 Grand Total) ÷ 2 (Final)</div>';
+
+  document.getElementById('r-sheet-content').innerHTML = `
+    <div class="rs-header">
+      <h2>${settings.name || 'Government Technical College'}</h2>
+      <p>Department of ${dept ? dept.name : student.dept}</p>
+      <p style="font-size:0.76rem;color:#888;">${sessionLabel} — ${termLabel}</p>
+    </div>
+    <dl class="rs-meta">
+      <dt>Student Name</dt><dd>${student.name}</dd>
+      <dt>Reg. Number</dt><dd>${student.reg}</dd>
+      <dt>Department</dt><dd>${dept ? dept.name : student.dept}</dd>
+      <dt>Level</dt><dd>${student.level}</dd>
+      <dt>Gender</dt><dd>${student.gender}</dd>
+      <dt>Session</dt><dd>${sessionLabel} — ${termLabel}</dd>
+    </dl>
+    <table class="rs-tbl">
+      <thead>
+        <tr>
+          <th>Code</th><th>Subject</th><th>Units</th>
+          <th>T1(10)</th><th>T2(10)</th><th>T3(10)</th><th>CA(30)</th>
+          <th>Exam(70)</th><th>Raw(100)</th><th>Grand Total</th>
+          <th>Grade</th><th>GP</th><th>WGP</th>
+        </tr>
+      </thead>
+      <tbody>${makeRows(records)}</tbody>
+      <tfoot>
+        <tr style="background:#f3f4f6;font-weight:700;">
+          <td colspan="2">TOTALS</td>
+          <td>${totalUnits}</td>
+          <td colspan="9"></td>
+          <td>${totalWGP}</td>
+        </tr>
+      </tfoot>
+    </table>
+    ${cumulativeNote}
+    <div class="rs-summary">
+      <div class="rs-summary-item"><div class="sv">${avg}%</div><div class="sl">Average</div></div>
+      <div class="rs-summary-item"><div class="sv">${gpa}</div><div class="sl">GPA</div></div>
+      <div class="rs-summary-item"><div class="sv">${totalWGP}</div><div class="sl">Total WGP</div></div>
+    </div>
+    <div class="rs-footer">
+      <span>Class Teacher: ___________________</span>
+      <span>Principal: ___________________</span>
+    </div>`;
+
+  document.getElementById('r-sheet-wrap').style.display = 'block';
+  document.getElementById('r-sheet-wrap').scrollIntoView({behavior:'smooth'});
+}
+
+function closeResultSheet(){
+  document.getElementById('r-sheet-wrap').style.display = 'none';
+  document.getElementById('student-link-box').style.display = 'none';
+}
+
+function printResultSheet(){
+  const content = document.getElementById('r-sheet-content');
+  if(!content || !content.innerHTML.trim()){ alert('No result to print!'); return; }
+  document.getElementById('r-sheet-wrap').style.display = 'block';
+  setTimeout(() => window.print(), 300);
+}
+
+// ============================================================
+// STUDENT RESULT LINKS
+// ============================================================
+function generateStudentLink(reg){
+  const term = document.getElementById('r-term').value || getSettings().term || 'First Term';
+  const session = document.getElementById('r-session').value || getSettings().session || '';
+  const token = btoa(SCHOOL_ID + '|' + reg + '|' + term + '|' + session + '|' + Date.now());
+
+  const link = BASE_URL + '?token=' + encodeURIComponent(token);
+
+  // Save link to Firebase
+  if(DB_REF){
+    const linkKey = (reg + '_' + term + '_' + session).replace(/[^a-zA-Z0-9]/g,'_');
+    DB_REF.child('links').child(linkKey).set({
+      reg, term, session, token, active:true, createdAt:Date.now(), schoolId:SCHOOL_ID
+    });
+  }
+
+  const linkBox = document.getElementById('student-link-box');
+  linkBox.style.display = 'block';
+  linkBox.innerHTML = `
+    <div style="margin-bottom:8px;font-size:0.8rem;color:var(--muted);">Student Result Link:</div>
+    <div class="link-box">
+      <span id="generated-link">${link}</span>
+      <button class="btn btn-ghost btn-sm" onclick="copyLink('${link}')" style="flex-shrink:0;">Copy</button>
+    </div>
+    <div style="margin-top:6px;font-size:0.72rem;color:var(--muted);">
+      Share this link with the student. Deactivate from Admin → Result Links to restrict access.
+    </div>`;
+
+  toast('Link generated!');
+}
+
+function copyLink(link){
+  navigator.clipboard.writeText(link).then(() => toast('Link copied!'));
+}
+
+function renderLinksTable(){
+  const tbody = document.getElementById('links-table-body');
+  if(!tbody) return;
+  const links = getLinks();
+  const dept = document.getElementById('link-dept')?.value;
+  const term = document.getElementById('link-term')?.value;
+
+  let filtered = links;
+  if(term) filtered = filtered.filter(l => l.term === term);
+
+  tbody.innerHTML = filtered.length === 0
+    ? '<tr><td colspan="5" style="text-align:center;color:var(--muted);padding:1rem;">No links generated yet</td></tr>'
+    : filtered.map(l => {
+        const student = getStudents().find(s => s.reg === l.reg);
+        return `<tr>
+          <td><span style="font-family:var(--mono);font-size:0.75rem;">${l.reg}</span></td>
+          <td>${student ? student.name : '-'}</td>
+          <td>${l.term}</td>
+          <td>
+            <span class="badge ${l.active ? 'badge-active' : 'badge-suspended'}">
+              ${l.active ? 'Active' : 'Inactive'}
+            </span>
+          </td>
+          <td style="display:flex;gap:4px;">
+            <button class="btn btn-sm ${l.active ? 'btn-danger' : 'btn-success'}" 
+              onclick="toggleLink('${l._key}',${!l.active})">
+              ${l.active ? 'Deactivate' : 'Activate'}
+            </button>
+            <button class="btn btn-ghost btn-sm" onclick="copyLink('${BASE_URL}?token=${encodeURIComponent(l.token||'')}')">Copy</button>
+          </td>
+        </tr>`;
+      }).join('');
+}
+
+function toggleLink(key, active){
+  if(DB_REF) DB_REF.child('links').child(key).update({active});
+  toast(active ? 'Link activated' : 'Link deactivated');
+}
+
+function generateAllLinks(){
+  const students = getStudents();
+  const term = getSettings().term || 'First Term';
+  const session = getSettings().session || '2024/2025';
+  const batch = {};
+
+  students.forEach(s => {
+    const token = btoa(SCHOOL_ID + '|' + s.reg + '|' + term + '|' + session + '|' + Date.now() + Math.random());
+    const key = (s.reg + '_' + term + '_' + session).replace(/[^a-zA-Z0-9]/g,'_');
+    batch['links/' + key] = { reg:s.reg, term, session, token, active:true, createdAt:Date.now(), schoolId:SCHOOL_ID };
+  });
+
+  if(DB_REF){
+    DB_REF.update(batch).then(() => toast(students.length + ' links generated!'));
+  }
+}
+
+function deactivateAllLinks(){
+  if(!confirm('Deactivate ALL student result links?')) return;
+  const links = getLinks();
+  const batch = {};
+  links.forEach(l => { batch['links/' + l._key + '/active'] = false; });
+  if(DB_REF) DB_REF.update(batch).then(() => toast('All links deactivated'));
+}
+
+// ============================================================
+// PAYMENT STATUS
+// ============================================================
+function checkPaymentStatus(){
+  const settings = getSettings();
+  const status = settings.paymentStatus || 'active';
+  const banner = document.getElementById('payment-banner');
+
+  if(status === 'active'){
+    banner.style.display = 'none';
+  } else if(status === 'due'){
+    banner.style.display = 'block';
+    banner.innerHTML = `<div class="alert alert-warning">⚠️ Your subscription payment is due. Please contact Rehoteq Technologies: 07036302585</div>`;
+  } else if(status === 'suspended'){
+    banner.style.display = 'block';
+    banner.innerHTML = `<div class="alert alert-danger">🚫 Your subscription has been suspended. Please pay to restore access. Contact: 07036302585</div>`;
+    // Restrict result access
+    if(CURRENT.role === 'student'){
+      document.querySelector('main').innerHTML = `
+        <div style="text-align:center;padding:3rem;">
+          <div style="font-size:3rem;margin-bottom:1rem;">🔒</div>
+          <h3 style="font-family:var(--serif);color:var(--gold);margin-bottom:0.5rem;">Results Temporarily Unavailable</h3>
+          <p style="color:var(--muted);">Please contact your school administration.</p>
+        </div>`;
+    }
+  }
+}
+
+// ============================================================
+// ADMIN SETTINGS
+// ============================================================
+function saveAdminSettings(){
+  const settings = {
+    name: document.getElementById('a-name').value,
+    session: document.getElementById('a-session').value,
+    term: document.getElementById('a-term').value,
+    principal: document.getElementById('a-principal').value,
+  };
+  const newPass = document.getElementById('a-admin-pass').value;
+  if(newPass) settings.adminPass = newPass;
+
+  if(DB_REF) DB_REF.child('settings').update(settings);
+  toast('Settings saved!');
+}
+
+// ============================================================
+// BROADSHEET
+// ============================================================
+function downloadBroadsheet(){
+  const dept = document.getElementById('bs-dept').value;
+  const term = document.getElementById('bs-term').value;
+  const session = document.getElementById('bs-session').value;
+
+  let students = getStudents();
+  if(dept) students = students.filter(s => s.dept === dept);
+
+  const results = getResults();
+  const subjects = getSubjects();
+
+  const deptSubjects = dept
+    ? subjects.filter(s => s.dept === dept)
+    : subjects;
+
+  let csv = 'Reg No,Name,Level,Department';
+  deptSubjects.forEach(s => {
+    csv += `,${s.code} T1,${s.code} T2,${s.code} T3,${s.code} Exam,${s.code} Total,${s.code} Grand,${s.code} Grade`;
+  });
+  csv += ',Total Units,Total WGP,GPA\n';
+
+  students.forEach(s => {
+    let row = `${s.reg},${s.name},${s.level},${s.dept}`;
+    let totalUnits = 0, totalWGP = 0;
+
+    deptSubjects.forEach(sub => {
+      const r = results.find(r =>
+        r.studentReg === s.reg && r.subjectCode === sub.code &&
+        r.term === term && r.session === session
+      );
+      if(r){
+        row += `,${r.t1||0},${r.t2||0},${r.t3||0},${r.exam||0},${r.total||0},${r.grandTotal||r.total||0},${r.grade||'-'}`;
+        totalUnits += r.units||2;
+        totalWGP += r.wgp||0;
+      } else {
+        row += ',-,-,-,-,-,-,-';
+      }
+    });
+
+    const gpa = totalUnits ? (totalWGP/totalUnits).toFixed(2) : '0.00';
+    row += `,${totalUnits},${totalWGP},${gpa}`;
+    csv += row + '\n';
+  });
+
+  const blob = new Blob([csv], {type:'text/csv'});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = `broadsheet-${dept||'all'}-${term}-${session||'session'}.csv`;
+  a.click();
+  URL.revokeObjectURL(url);
+  toast('Broadsheet downloaded!');
+}
+
+// ============================================================
+// EXPORT / IMPORT
+// ============================================================
+function exportData(){
+  const data = {
+    students: LIVE.students,
+    subjects: LIVE.subjects,
+    results: LIVE.results,
+    settings: LIVE.settings,
+    departments: LIVE.departments,
+    exportedAt: new Date().toISOString(),
+    schoolId: SCHOOL_ID
+  };
+  const blob = new Blob([JSON.stringify(data, null, 2)], {type:'application/json'});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = `rehoteq-backup-${SCHOOL_ID}-${Date.now()}.json`;
+  a.click();
+  URL.revokeObjectURL(url);
+  toast('Data exported!');
+}
+
+function importData(event){
+  const file = event.target.files[0];
+  if(!file) return;
+  const reader = new FileReader();
+  reader.onload = e => {
+    try{
+      const data = JSON.parse(e.target.result);
+      if(DB_REF){
+        const batch = {};
+        if(data.students) batch.students = data.students;
+        if(data.subjects) batch.subjects = data.subjects;
+        if(data.results) batch.results = data.results;
+        if(data.departments) batch.departments = data.departments;
+        DB_REF.update(batch).then(() => toast('Data imported!'));
+      }
+    } catch(err){
+      toast('Invalid file', 'error');
+    }
+  };
+  reader.readAsText(file);
+}
+
+function confirmClearResults(){
+  const term = prompt('Type the term to clear (e.g. "First Term"):');
+  if(!term) return;
+  const session = prompt('Type the session (e.g. "2024/2025"):');
+  if(!session) return;
+
+  const results = getResults();
+  const toDelete = results.filter(r => r.term === term && r.session === session);
+
+  if(!toDelete.length){ toast('No results found for that term/session', 'error'); return; }
+  if(!confirm(`Delete ${toDelete.length} results for ${term} ${session}?`)) return;
+
+  if(DB_REF){
+    const batch = {};
+    toDelete.forEach(r => { batch['results/' + r._key] = null; });
+    DB_REF.update(batch).then(() => toast(toDelete.length + ' results cleared'));
+  }
+}
+
+// ============================================================
+// SUPER ADMIN
+// ============================================================
+function showSuperAdmin(){
+  document.getElementById('super-admin-modal').style.display = 'flex';
+}
+function closeSuperAdmin(){
+  document.getElementById('super-admin-modal').style.display = 'none';
+}
+function superAdminLogin(){
+  const pass = document.getElementById('sa-pass').value;
+  if(pass !== SUPER_ADMIN_PASS){ toast('Wrong master password', 'error'); return; }
+  closeSuperAdmin();
+  // Navigate to super admin dashboard
+  window.location.href = 'super-admin.html';
+}
+
+// ============================================================
+// STUDENT RESULT VIA TOKEN LINK
+// ============================================================
+function checkTokenLink(){
+  const params = new URLSearchParams(window.location.search);
+  const token = params.get('token');
+  if(!token) return;
+
+  try{
+    const decoded = atob(decodeURIComponent(token));
+    const parts = decoded.split('|');
+    if(parts.length < 4) return;
+
+    const schoolId = parts[0];
+    const reg = parts[1];
+    const term = parts[2];
+    const session = parts[3];
+
+    SCHOOL_ID = schoolId;
+
+    // Init Firebase for this school
+    const config = getSchoolConfig(schoolId);
+    if(!config){ showTokenError('School not found'); return; }
+
+    initFirebase(config, schoolId);
+
+    // Wait for data then show result
+    setTimeout(() => {
+      // Check if link is active
+      const linkKey = (reg + '_' + term + '_' + session).replace(/[^a-zA-Z0-9]/g,'_');
+      if(DB_REF){
+        DB_REF.child('links').child(linkKey).once('value', snap => {
+          const link = snap.val();
+          if(link && link.active === false){
+            showTokenError('Result access has been restricted. Please contact your school administration.');
+            return;
+          }
+          // Check payment status
+          DB_REF.child('settings').once('value', snap => {
+            const settings = snap.val() || {};
+            if(settings.paymentStatus === 'suspended'){
+              showTokenError('Results temporarily unavailable. Please contact your school.');
+              return;
+            }
+            CURRENT = { role:'student', name:'', dept:'' };
+            showStudentViaToken(reg, term, session);
+          });
+        });
+      }
+    }, 2000);
+
+    // Show loading
+    document.getElementById('login-page').style.display = 'none';
+    document.getElementById('main-app').style.display = 'block';
+    document.getElementById('header-school-name').textContent = schoolId;
+    document.querySelector('main').innerHTML = `
+      <div style="text-align:center;padding:3rem;">
+        <div style="font-size:2rem;margin-bottom:1rem;">⏳</div>
+        <p style="color:var(--muted);">Loading your result...</p>
+      </div>`;
+
+  } catch(e){
+    showTokenError('Invalid or expired link');
+  }
+}
+
+function showTokenError(msg){
+  document.querySelector('main').innerHTML = `
+    <div style="text-align:center;padding:3rem;">
+      <div style="font-size:3rem;margin-bottom:1rem;">🔒</div>
+      <h3 style="font-family:var(--serif);color:var(--red);margin-bottom:0.5rem;">Access Denied</h3>
+      <p style="color:var(--muted);">${msg}</p>
+      <p style="margin-top:1rem;font-size:0.8rem;color:var(--muted);">Contact Rehoteq Technologies: 07036302585</p>
+    </div>`;
+}
+
+function showStudentViaToken(reg, term, session){
+  document.querySelector('main').innerHTML = `
+    <div id="student-token-result"></div>`;
+
+  setTimeout(() => {
+    const student = getStudents().find(s => s.reg === reg);
+    if(!student){ showTokenError('Student not found'); return; }
+
+    let records = getResults().filter(r => r.studentReg === reg);
+    if(term) records = records.filter(r => r.term === term);
+    if(session) records = records.filter(r => r.session === session);
+
+    if(!records.length){ showTokenError('No results available yet'); return; }
+
+    // Reuse viewStudentResult logic
+    CURRENT = { role:'student', name:student.name, dept:student.dept };
+    viewStudentResult(reg, term, session);
+
+    document.querySelector('main').innerHTML = `
+      <div style="margin-bottom:1rem;display:flex;gap:8px;">
+        <button class="btn btn-primary" onclick="window.print()">🖨️ Print / Save PDF</button>
+      </div>
+      <div id="r-sheet-wrap" style="display:block;">
+        <div id="r-sheet-content" class="result-sheet"></div>
+      </div>`;
+
+    setTimeout(() => viewStudentResult(reg, term, session), 500);
+  }, 1000);
+}
+
+// ============================================================
+// INIT
+// ============================================================
+window.onload = function(){
+  // Check for token link
+  checkTokenLink();
+
+  // Set default role
+  selectRole('admin', document.querySelector('.role-btn'));
+};
+</script>
+</body>
+</html>
