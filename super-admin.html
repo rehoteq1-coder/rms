@@ -1,0 +1,557 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Rehoteq Super Admin</title>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;900&family=Outfit:wght@400;600;700;800&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet"/>
+<style>
+:root{
+  --navy:#0a0f1e;--deep:#0f1628;--card:#141c30;--card2:#1a2240;
+  --border:rgba(255,255,255,0.07);--gold:#c9a84c;--gold2:#f0c040;
+  --green:#00c853;--red:#ff4444;--cyan:#00b4d8;--white:#f0f4ff;
+  --muted:rgba(240,244,255,0.45);
+}
+*{margin:0;padding:0;box-sizing:border-box;}
+body{font-family:'Outfit',sans-serif;background:var(--navy);color:var(--white);min-height:100vh;}
+input,select,button{font-family:'Outfit',sans-serif;}
+
+/* LOGIN */
+.login-page{min-height:100vh;display:flex;align-items:center;justify-content:center;padding:1rem;}
+.login-box{background:var(--card);border:1px solid var(--border);border-radius:20px;padding:2rem;width:100%;max-width:400px;}
+.login-logo{text-align:center;margin-bottom:1.5rem;}
+.big-icon{width:60px;height:60px;border-radius:16px;margin:0 auto 10px;background:linear-gradient(135deg,#8b6914,var(--gold),var(--gold2));display:flex;align-items:center;justify-content:center;font-family:'Playfair Display',serif;font-size:1.6rem;font-weight:900;color:#000;box-shadow:0 0 30px rgba(201,168,76,0.4);}
+.login-logo h2{font-family:'Playfair Display',serif;font-size:1.3rem;color:var(--white);}
+.login-logo p{font-size:0.75rem;color:var(--muted);margin-top:3px;}
+
+/* MAIN */
+.main-app{display:none;min-height:100vh;}
+header{background:linear-gradient(135deg,var(--deep),var(--card));border-bottom:1px solid var(--border);padding:0.9rem 1.2rem;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:100;}
+.logo{display:flex;align-items:center;gap:10px;}
+.logo-icon{width:38px;height:38px;border-radius:10px;background:linear-gradient(135deg,#8b6914,var(--gold),var(--gold2));display:flex;align-items:center;justify-content:center;font-family:'Playfair Display',serif;font-size:1rem;font-weight:900;color:#000;}
+.logo-text h1{font-family:'Playfair Display',serif;font-size:1rem;font-weight:700;}
+.logo-text p{font-size:0.6rem;color:var(--muted);letter-spacing:0.1em;text-transform:uppercase;}
+main{padding:1rem;max-width:900px;margin:0 auto;}
+
+/* FORMS & BUTTONS */
+.panel{background:var(--card);border:1px solid var(--border);border-radius:14px;padding:1.2rem;margin-bottom:1rem;}
+.panel-title{font-family:'Playfair Display',serif;font-size:1.05rem;font-weight:700;color:var(--white);margin-bottom:1rem;}
+.panel-title span{color:var(--gold);}
+.form-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:1rem;}
+.form-group{display:flex;flex-direction:column;gap:5px;}
+.form-group label{font-size:0.72rem;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:0.08em;}
+.form-group input,.form-group select,.form-group textarea{background:var(--card2);border:1px solid var(--border);border-radius:8px;padding:9px 12px;color:var(--white);font-size:0.85rem;outline:none;}
+.form-group input:focus{border-color:rgba(201,168,76,0.4);}
+.form-group select option{background:var(--card2);}
+.full{grid-column:1/-1;}
+.btn{border:none;border-radius:8px;padding:9px 18px;font-size:0.82rem;font-weight:600;cursor:pointer;transition:all 0.2s;display:inline-flex;align-items:center;gap:6px;}
+.btn-primary{background:linear-gradient(135deg,#8b6914,var(--gold));color:#000;}
+.btn-ghost{background:transparent;border:1px solid var(--border);color:var(--muted);}
+.btn-danger{background:rgba(255,68,68,0.15);border:1px solid rgba(255,68,68,0.3);color:#ff6b6b;}
+.btn-success{background:rgba(0,200,83,0.15);border:1px solid rgba(0,200,83,0.3);color:var(--green);}
+.btn-sm{padding:6px 12px;font-size:0.75rem;}
+.btn-block{width:100%;justify-content:center;}
+table{width:100%;border-collapse:collapse;font-size:0.82rem;}
+th{background:var(--card2);color:var(--muted);padding:8px 10px;text-align:left;font-size:0.7rem;text-transform:uppercase;letter-spacing:0.06em;border-bottom:1px solid var(--border);}
+td{padding:8px 10px;border-bottom:1px solid var(--border);color:var(--white);}
+.badge{display:inline-flex;align-items:center;padding:3px 10px;border-radius:20px;font-size:0.68rem;font-weight:700;text-transform:uppercase;}
+.badge-active{background:rgba(0,200,83,0.15);color:var(--green);border:1px solid rgba(0,200,83,0.3);}
+.badge-due{background:rgba(255,165,0,0.15);color:orange;border:1px solid rgba(255,165,0,0.3);}
+.badge-suspended{background:rgba(255,68,68,0.15);color:var(--red);border:1px solid rgba(255,68,68,0.3);}
+.stat-card{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:1rem;text-align:center;}
+.stat-val{font-family:'Playfair Display',serif;font-size:1.6rem;font-weight:900;color:var(--gold);}
+.stat-lbl{font-size:0.68rem;color:var(--muted);margin-top:2px;text-transform:uppercase;}
+.stats-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:10px;margin-bottom:1rem;}
+#toast{position:fixed;bottom:20px;left:50%;transform:translateX(-50%) translateY(100px);background:var(--card2);border:1px solid var(--border);border-radius:10px;padding:10px 20px;font-size:0.82rem;color:var(--white);transition:transform 0.3s;z-index:9999;}
+#toast.show{transform:translateX(-50%) translateY(0);}
+#toast.success{border-color:rgba(0,200,83,0.4);color:var(--green);}
+#toast.error{border-color:rgba(255,68,68,0.4);color:var(--red);}
+.school-id-tag{font-family:'DM Mono',monospace;background:rgba(201,168,76,0.1);border:1px solid rgba(201,168,76,0.3);border-radius:6px;padding:2px 8px;font-size:0.78rem;color:var(--gold);}
+.copy-btn{background:transparent;border:none;color:var(--cyan);cursor:pointer;font-size:0.75rem;text-decoration:underline;}
+@media(max-width:600px){.form-grid{grid-template-columns:1fr;}.stats-grid{grid-template-columns:1fr 1fr;}}
+</style>
+</head>
+<body>
+
+<!-- LOGIN -->
+<div class="login-page" id="login-page">
+  <div class="login-box">
+    <div class="login-logo">
+      <div class="big-icon">R</div>
+      <h2>Rehoteq Super Admin</h2>
+      <p>Master control for all schools</p>
+    </div>
+    <div class="form-group" style="margin-bottom:1rem;">
+      <label>Master Password</label>
+      <input type="password" id="sa-pass" placeholder="Enter master password" onkeydown="if(event.key==='Enter')doLogin()"/>
+    </div>
+    <button class="btn btn-primary btn-block" style="padding:12px;" onclick="doLogin()">Login →</button>
+    <div style="text-align:center;margin-top:1rem;">
+      <a href="index.html" style="font-size:0.72rem;color:var(--muted);text-decoration:none;">← Back to RMS</a>
+    </div>
+  </div>
+</div>
+
+<!-- MAIN APP -->
+<div class="main-app" id="main-app">
+  <header>
+    <div class="logo">
+      <div class="logo-icon">R</div>
+      <div class="logo-text">
+        <h1>Rehoteq <span style="color:var(--gold)">Super Admin</span></h1>
+        <p>Master Control Panel</p>
+      </div>
+    </div>
+    <button class="btn btn-ghost btn-sm" onclick="logout()">Logout</button>
+  </header>
+
+  <main>
+    <!-- STATS -->
+    <div class="stats-grid" id="stats-grid">
+      <div class="stat-card"><div class="stat-val" id="s-total">0</div><div class="stat-lbl">Total Schools</div></div>
+      <div class="stat-card"><div class="stat-val" id="s-active" style="color:var(--green)">0</div><div class="stat-lbl">Active</div></div>
+      <div class="stat-card"><div class="stat-val" id="s-due" style="color:orange">0</div><div class="stat-lbl">Payment Due</div></div>
+      <div class="stat-card"><div class="stat-val" id="s-suspended" style="color:var(--red)">0</div><div class="stat-lbl">Suspended</div></div>
+    </div>
+
+    <!-- REGISTER NEW SCHOOL -->
+    <div class="panel">
+      <div class="panel-title">🏫 Register <span>New School</span></div>
+      <div class="form-grid">
+        <div class="form-group full">
+          <label>School Name</label>
+          <input type="text" id="n-name" placeholder="Full school name"/>
+        </div>
+        <div class="form-group full">
+          <label>School Address</label>
+          <input type="text" id="n-address" placeholder="School address"/>
+        </div>
+        <div class="form-group">
+          <label>Principal Name</label>
+          <input type="text" id="n-principal" placeholder="Principal's name"/>
+        </div>
+        <div class="form-group">
+          <label>Contact Phone (WhatsApp)</label>
+          <input type="text" id="n-phone" placeholder="e.g. 08012345678"/>
+        </div>
+        <div class="form-group">
+          <label>Email</label>
+          <input type="email" id="n-email" placeholder="School email"/>
+        </div>
+        <div class="form-group">
+          <label>Subscription Plan</label>
+          <select id="n-plan">
+            <option value="basic">Basic — N5,000/term (100 students)</option>
+            <option value="standard">Standard — N10,000/term (150 students)</option>
+            <option value="premium">Premium — N15,000/term (200+ students)</option>
+            <option value="whitelabel">White Label — N20,000/term</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>Firebase Database URL</label>
+          <input type="text" id="n-dburl" placeholder="https://xxx-default-rtdb.firebaseio.com"/>
+        </div>
+        <div class="form-group">
+          <label>Firebase API Key</label>
+          <input type="text" id="n-apikey" placeholder="AIzaSy..."/>
+        </div>
+        <div class="form-group">
+          <label>Firebase Project ID</label>
+          <input type="text" id="n-projectid" placeholder="project-id"/>
+        </div>
+        <div class="form-group">
+          <label>Firebase App ID</label>
+          <input type="text" id="n-appid" placeholder="1:xxx:web:xxx"/>
+        </div>
+        <div class="form-group">
+          <label>Session</label>
+          <input type="text" id="n-session" placeholder="e.g. 2024/2025"/>
+        </div>
+        <div class="form-group">
+          <label>Current Term</label>
+          <select id="n-term">
+            <option value="First Term">First Term</option>
+            <option value="Second Term">Second Term</option>
+            <option value="Third Term">Third Term</option>
+          </select>
+        </div>
+      </div>
+      <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;">
+        <button class="btn btn-primary" onclick="registerSchool()">Register School & Generate ID</button>
+        <div id="generated-id-box" style="display:none;"></div>
+      </div>
+    </div>
+
+    <!-- ALL SCHOOLS -->
+    <div class="panel">
+      <div class="panel-title">🏫 All <span>Registered Schools</span></div>
+      <div style="overflow-x:auto;">
+        <table>
+          <thead>
+            <tr>
+              <th>School ID</th>
+              <th>School Name</th>
+              <th>Plan</th>
+              <th>Status</th>
+              <th>Due Date</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody id="schools-table"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- SCHOOL DETAIL MODAL -->
+    <div id="school-detail" style="display:none;">
+      <div class="panel">
+        <div class="panel-title" id="detail-title">School Details</div>
+        <div id="detail-content"></div>
+        <div style="margin-top:1rem;display:flex;gap:8px;flex-wrap:wrap;">
+          <button class="btn btn-success btn-sm" onclick="setPaymentStatus(currentSchoolId,'active')">✅ Set Active</button>
+          <button class="btn btn-sm" style="background:rgba(255,165,0,0.15);border:1px solid rgba(255,165,0,0.3);color:orange;" onclick="setPaymentStatus(currentSchoolId,'due')">⚠️ Mark Due</button>
+          <button class="btn btn-danger btn-sm" onclick="setPaymentStatus(currentSchoolId,'suspended')">🚫 Suspend</button>
+          <button class="btn btn-ghost btn-sm" onclick="document.getElementById('school-detail').style.display='none'">✖ Close</button>
+        </div>
+      </div>
+    </div>
+
+  </main>
+</div>
+
+<div id="toast"></div>
+
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
+<script>
+// ============================================================
+// SUPER ADMIN CONFIG
+// ============================================================
+const SUPER_ADMIN_PASS = 'rehoteq@superadmin2025';
+const MASTER_DB_CONFIG = {
+  apiKey: "AIzaSyAlGrnex8GCd6Ciw_cggrEiA9nhSnEfFMU",
+  authDomain: "gtc-okitipupa.firebaseapp.com",
+  databaseURL: "https://gtc-okitipupa-default-rtdb.firebaseio.com",
+  projectId: "gtc-okitipupa",
+  appId: "1:822961195945:web:a05839b2d488bec61792b8"
+};
+
+let MASTER_DB = null;
+let SCHOOLS = {};
+let currentSchoolId = '';
+
+// ============================================================
+// UTILITY
+// ============================================================
+function toast(msg, type='success'){
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.className = 'show ' + type;
+  setTimeout(() => t.className = '', 3000);
+}
+
+function generateSchoolId(){
+  const schools = Object.keys(SCHOOLS);
+  const nums = schools.map(k => {
+    const m = k.match(/RMS-(\d+)/);
+    return m ? parseInt(m[1]) : 0;
+  });
+  const next = nums.length ? Math.max(...nums) + 1 : 1;
+  return 'RMS-' + String(next).padStart(4, '0');
+}
+
+function copyText(text){
+  navigator.clipboard.writeText(text).then(() => toast('Copied!'));
+}
+
+// ============================================================
+// LOGIN
+// ============================================================
+function doLogin(){
+  const pass = document.getElementById('sa-pass').value;
+  if(pass !== SUPER_ADMIN_PASS){
+    toast('Wrong master password', 'error');
+    return;
+  }
+
+  // Init master Firebase
+  try{
+    let app;
+    try{ app = firebase.app('super-admin'); }
+    catch(e){ app = firebase.initializeApp(MASTER_DB_CONFIG, 'super-admin'); }
+    MASTER_DB = firebase.database(app).ref('rehoteq_schools');
+
+    MASTER_DB.on('value', snap => {
+      SCHOOLS = snap.val() || {};
+      renderSchools();
+      updateStats();
+    });
+
+    document.getElementById('login-page').style.display = 'none';
+    document.getElementById('main-app').style.display = 'block';
+
+  } catch(err){
+    toast('Connection error: ' + err.message, 'error');
+  }
+}
+
+function logout(){
+  if(MASTER_DB) MASTER_DB.off();
+  MASTER_DB = null;
+  SCHOOLS = {};
+  document.getElementById('main-app').style.display = 'none';
+  document.getElementById('login-page').style.display = 'flex';
+  document.getElementById('sa-pass').value = '';
+}
+
+// ============================================================
+// REGISTER NEW SCHOOL
+// ============================================================
+function registerSchool(){
+  const name = document.getElementById('n-name').value.trim();
+  const address = document.getElementById('n-address').value.trim();
+  const principal = document.getElementById('n-principal').value.trim();
+  const phone = document.getElementById('n-phone').value.trim();
+  const email = document.getElementById('n-email').value.trim();
+  const plan = document.getElementById('n-plan').value;
+  const dbUrl = document.getElementById('n-dburl').value.trim();
+  const apiKey = document.getElementById('n-apikey').value.trim();
+  const projectId = document.getElementById('n-projectid').value.trim();
+  const appId = document.getElementById('n-appid').value.trim();
+  const session = document.getElementById('n-session').value.trim();
+  const term = document.getElementById('n-term').value;
+
+  if(!name){ toast('School name required', 'error'); return; }
+  if(!dbUrl || !apiKey){ toast('Firebase config required', 'error'); return; }
+
+  const schoolId = generateSchoolId();
+  const now = Date.now();
+
+  // Calculate due date (3 months from now)
+  const dueDate = new Date();
+  dueDate.setMonth(dueDate.getMonth() + 3);
+
+  const school = {
+    id: schoolId,
+    name,
+    address,
+    principal,
+    phone,
+    email,
+    plan,
+    session: session || '2024/2025',
+    term,
+    paymentStatus: 'active',
+    dueDate: dueDate.toISOString().split('T')[0],
+    registeredAt: now,
+    firebaseConfig: {
+      apiKey,
+      authDomain: projectId + '.firebaseapp.com',
+      databaseURL: dbUrl,
+      projectId,
+      appId
+    }
+  };
+
+  if(MASTER_DB){
+    MASTER_DB.child(schoolId).set(school)
+      .then(() => {
+        toast('School registered! ID: ' + schoolId);
+
+        // Show generated school ID
+        const box = document.getElementById('generated-id-box');
+        box.style.display = 'block';
+        box.innerHTML = `
+          <div style="background:rgba(201,168,76,0.1);border:1px solid rgba(201,168,76,0.3);
+            border-radius:10px;padding:12px 16px;">
+            <div style="font-size:0.72rem;color:var(--muted);margin-bottom:4px;">School ID Generated:</div>
+            <div style="font-family:'DM Mono',monospace;font-size:1.2rem;color:var(--gold);font-weight:700;">
+              ${schoolId}
+            </div>
+            <button class="copy-btn" onclick="copyText('${schoolId}')" style="margin-top:6px;">Copy ID</button>
+            <div style="font-size:0.72rem;color:var(--muted);margin-top:6px;">
+              Share this ID with the school — they use it to login to the RMS system
+            </div>
+          </div>`;
+
+        // Clear form
+        ['n-name','n-address','n-principal','n-phone','n-email','n-dburl','n-apikey','n-projectid','n-appid'].forEach(id => {
+          document.getElementById(id).value = '';
+        });
+
+        // Also push Firebase config to the school's own database settings
+        pushSettingsToSchool(school);
+      })
+      .catch(err => toast('Error: ' + err.message, 'error'));
+  }
+}
+
+function pushSettingsToSchool(school){
+  // Push school settings to their own Firebase database
+  try{
+    const appName = 'setup-' + school.id;
+    let app;
+    try{ app = firebase.app(appName); }
+    catch(e){ app = firebase.initializeApp(school.firebaseConfig, appName); }
+
+    const schoolDB = firebase.database(app).ref('rms/settings');
+    schoolDB.update({
+      name: school.name,
+      session: school.session,
+      term: school.term,
+      principal: school.principal,
+      plan: school.plan,
+      schoolId: school.id,
+      paymentStatus: 'active',
+      adminPass: 'admin123',
+      teacherPass: 'teacher123'
+    }).then(() => {
+      toast('School settings pushed to Firebase ✅');
+    });
+  } catch(err){
+    console.log('Could not push settings:', err.message);
+  }
+}
+
+// ============================================================
+// RENDER SCHOOLS
+// ============================================================
+function renderSchools(){
+  const tbody = document.getElementById('schools-table');
+  const schoolsList = Object.values(SCHOOLS);
+
+  if(!schoolsList.length){
+    tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;color:var(--muted);padding:2rem;">No schools registered yet</td></tr>';
+    return;
+  }
+
+  tbody.innerHTML = schoolsList.map(s => {
+    const statusClass = s.paymentStatus === 'active' ? 'badge-active'
+      : s.paymentStatus === 'due' ? 'badge-due' : 'badge-suspended';
+    const statusText = s.paymentStatus === 'active' ? 'Active'
+      : s.paymentStatus === 'due' ? 'Payment Due' : 'Suspended';
+
+    return `<tr>
+      <td><span class="school-id-tag">${s.id}</span></td>
+      <td>
+        <div style="font-weight:600;">${s.name}</div>
+        <div style="font-size:0.72rem;color:var(--muted);">${s.phone || ''}</div>
+      </td>
+      <td style="text-transform:capitalize;">${s.plan}</td>
+      <td><span class="badge ${statusClass}">${statusText}</span></td>
+      <td style="font-size:0.78rem;color:var(--muted);">${s.dueDate || '-'}</td>
+      <td style="display:flex;gap:4px;flex-wrap:wrap;">
+        <button class="btn btn-primary btn-sm" onclick="viewSchool('${s.id}')">View</button>
+        <button class="btn btn-success btn-sm" onclick="setPaymentStatus('${s.id}','active')">✅</button>
+        <button class="btn btn-danger btn-sm" onclick="setPaymentStatus('${s.id}','suspended')">🚫</button>
+      </td>
+    </tr>`;
+  }).join('');
+}
+
+function updateStats(){
+  const schools = Object.values(SCHOOLS);
+  document.getElementById('s-total').textContent = schools.length;
+  document.getElementById('s-active').textContent = schools.filter(s => s.paymentStatus === 'active').length;
+  document.getElementById('s-due').textContent = schools.filter(s => s.paymentStatus === 'due').length;
+  document.getElementById('s-suspended').textContent = schools.filter(s => s.paymentStatus === 'suspended').length;
+}
+
+function viewSchool(id){
+  currentSchoolId = id;
+  const school = SCHOOLS[id];
+  if(!school) return;
+
+  document.getElementById('detail-title').innerHTML = `🏫 <span>${school.name}</span>`;
+  document.getElementById('detail-content').innerHTML = `
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;font-size:0.85rem;">
+      <div><span style="color:var(--muted);font-size:0.72rem;display:block;">School ID</span>
+        <span class="school-id-tag">${school.id}</span>
+        <button class="copy-btn" onclick="copyText('${school.id}')">Copy</button>
+      </div>
+      <div><span style="color:var(--muted);font-size:0.72rem;display:block;">Plan</span>
+        <strong style="text-transform:capitalize;">${school.plan}</strong>
+      </div>
+      <div><span style="color:var(--muted);font-size:0.72rem;display:block;">Principal</span>
+        <strong>${school.principal || '-'}</strong>
+      </div>
+      <div><span style="color:var(--muted);font-size:0.72rem;display:block;">Phone</span>
+        <strong>${school.phone || '-'}</strong>
+      </div>
+      <div><span style="color:var(--muted);font-size:0.72rem;display:block;">Email</span>
+        <strong>${school.email || '-'}</strong>
+      </div>
+      <div><span style="color:var(--muted);font-size:0.72rem;display:block;">Payment Due</span>
+        <strong>${school.dueDate || '-'}</strong>
+      </div>
+      <div><span style="color:var(--muted);font-size:0.72rem;display:block;">Session</span>
+        <strong>${school.session} — ${school.term}</strong>
+      </div>
+      <div><span style="color:var(--muted);font-size:0.72rem;display:block;">Payment Status</span>
+        <span class="badge ${school.paymentStatus === 'active' ? 'badge-active' : school.paymentStatus === 'due' ? 'badge-due' : 'badge-suspended'}">
+          ${school.paymentStatus}
+        </span>
+      </div>
+      <div style="grid-column:1/-1;">
+        <span style="color:var(--muted);font-size:0.72rem;display:block;margin-bottom:4px;">Address</span>
+        <strong>${school.address || '-'}</strong>
+      </div>
+      <div style="grid-column:1/-1;">
+        <span style="color:var(--muted);font-size:0.72rem;display:block;margin-bottom:4px;">Login URL to share with school</span>
+        <div style="font-family:'DM Mono',monospace;font-size:0.75rem;color:var(--cyan);background:rgba(0,180,216,0.05);border:1px solid rgba(0,180,216,0.2);border-radius:8px;padding:8px 12px;word-break:break-all;">
+          ${window.location.origin + window.location.pathname.replace('super-admin.html','index.html')}?school=${school.id}
+        </div>
+        <button class="copy-btn" onclick="copyText('${window.location.origin + window.location.pathname.replace('super-admin.html','index.html')}?school=${school.id}')">Copy login URL</button>
+      </div>
+    </div>
+    <div style="margin-top:1rem;">
+      <label style="font-size:0.72rem;color:var(--muted);text-transform:uppercase;display:block;margin-bottom:4px;">Update Payment Due Date</label>
+      <div style="display:flex;gap:8px;align-items:center;">
+        <input type="date" id="new-due-date" style="background:var(--card2);border:1px solid var(--border);border-radius:8px;padding:7px 10px;color:var(--white);font-size:0.82rem;outline:none;"/>
+        <button class="btn btn-primary btn-sm" onclick="updateDueDate('${school.id}')">Update</button>
+      </div>
+    </div>`;
+
+  document.getElementById('school-detail').style.display = 'block';
+  document.getElementById('school-detail').scrollIntoView({behavior:'smooth'});
+}
+
+function setPaymentStatus(schoolId, status){
+  if(!MASTER_DB) return;
+  MASTER_DB.child(schoolId).update({paymentStatus: status})
+    .then(() => {
+      toast('Status updated to: ' + status);
+      // Also push to school's own Firebase
+      const school = SCHOOLS[schoolId];
+      if(school && school.firebaseConfig){
+        try{
+          const appName = 'status-' + schoolId + '-' + Date.now();
+          const app = firebase.initializeApp(school.firebaseConfig, appName);
+          firebase.database(app).ref('rms/settings').update({paymentStatus: status});
+        } catch(e){ console.log('Could not push to school DB:', e); }
+      }
+    })
+    .catch(err => toast('Error: ' + err.message, 'error'));
+}
+
+function updateDueDate(schoolId){
+  const date = document.getElementById('new-due-date').value;
+  if(!date){ toast('Select a date', 'error'); return; }
+  MASTER_DB.child(schoolId).update({dueDate: date})
+    .then(() => toast('Due date updated!'));
+}
+
+// ============================================================
+// INIT
+// ============================================================
+window.onload = function(){
+  // Check if already logged in via URL param
+  const params = new URLSearchParams(window.location.search);
+  if(params.get('auto') === 'true'){
+    // Auto-login from main RMS
+    document.getElementById('sa-pass').focus();
+  }
+};
+</script>
+</body>
+</html>
