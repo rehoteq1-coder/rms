@@ -1,0 +1,28 @@
+{
+  "name": "Rehoteq RMS — School Result Management",
+  "short_name": "Rehoteq RMS",
+  "description": "School Result Management System by Rehoteq Technologies, Okitipupa",
+  "start_url": "https://rehoteq1-coder.github.io/rehoteq/rms/index.html",
+  "scope": "https://rehoteq1-coder.github.io/rehoteq/rms/",
+  "display": "standalone",
+  "orientation": "portrait-primary",
+  "background_color": "#0a0f1e",
+  "theme_color": "#c9a84c",
+  "icons": [
+    {
+      "src": "https://rehoteq1-coder.github.io/rehoteq/rms/rehoteq-icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "https://rehoteq1-coder.github.io/rehoteq/rms/rehoteq-icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ],
+  "categories": ["education", "productivity"],
+  "lang": "en-NG",
+  "dir": "ltr"
+}
