@@ -2349,5 +2349,13 @@ window.onload = function(){
   }
 };
 </script>
-</body>
+</script>
+if('serviceWorker' in navigator){
+  window.addEventListener('load',function(){
+    navigator.serviceWorker.register('/rms/sw.js')
+      .then(function(reg){console.log('RMS PWA ready ✅');})
+      .catch(function(err){console.log('SW failed:',err);});
+  });
+}
+</script>body>
 </html>
