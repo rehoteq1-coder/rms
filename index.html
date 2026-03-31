@@ -1,12 +1,5 @@
 <!DOCTYPE html>
 <html lang="en">
-<link rel="manifest" href="/rms/manifest.json"/>
-<meta name="theme-color" content="#c9a84c"/>
-<meta name="mobile-web-app-capable" content="yes"/>
-<meta name="apple-mobile-web-app-capable" content="yes"/>
-<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"/>
-<meta name="apple-mobile-web-app-title" content="Rehoteq RMS"/>
-<link rel="apple-touch-icon" href="https://rehoteq.com/assets/resources/rehoteq-icon-192.png"/>
 <head>
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
@@ -286,14 +279,14 @@ tr:hover td{background:rgba(255,255,255,0.02);}
   .no-print{display:none!important;}
 }
 </style>
-</head>
-   <link rel="manifest" href="/rms/manifest.json"/>
+<link rel="manifest" href="/rms/manifest.json"/>
 <meta name="theme-color" content="#c9a84c"/>
 <meta name="mobile-web-app-capable" content="yes"/>
 <meta name="apple-mobile-web-app-capable" content="yes"/>
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"/>
 <meta name="apple-mobile-web-app-title" content="Rehoteq RMS"/>
 <link rel="apple-touch-icon" href="https://rehoteq.com/assets/resources/rehoteq-icon-192.png"/>
+</head>
 <body>
 <div class="app">
 
@@ -2349,7 +2342,7 @@ window.onload = function(){
   }
 };
 </script>
-</script>
+<script>
 if('serviceWorker' in navigator){
   window.addEventListener('load',function(){
     navigator.serviceWorker.register('/rms/sw.js')
@@ -2357,6 +2350,6 @@ if('serviceWorker' in navigator){
       .catch(function(err){console.log('SW failed:',err);});
   });
 }
-</script> 
+</script>
 </body>
 </html>
