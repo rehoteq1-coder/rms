@@ -1,0 +1,438 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+<title>Rehoteq Super Admin — Master Control</title>
+<script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+<script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
+<style>
+:root{
+  --bg:#030305;--card:#0D1033;--card2:#141840;--border:rgba(255,255,255,0.08);
+  --gold:#C9A84C;--gold2:#F0C040;--white:#F0F0F8;--muted:#8890B8;--muted2:#4A5280;
+  --green:#0DB76A;--red:#FF4560;--cyan:#00B4D8;--serif:'Georgia',serif;
+  --sans:'Inter','Segoe UI',sans-serif;--mono:'DM Mono','Courier New',monospace;
+}
+*{box-sizing:border-box;margin:0;padding:0;}
+body{background:var(--bg);color:var(--white);font-family:var(--sans);min-height:100vh;}
+
+/* ── AUTH SCREEN ── */
+#auth-screen{display:flex;align-items:center;justify-content:center;min-height:100vh;padding:20px;}
+.auth-card{background:var(--card);border:1px solid var(--border);border-radius:20px;padding:36px;width:100%;max-width:400px;text-align:center;}
+.auth-logo{font-family:var(--serif);font-size:1.8rem;font-weight:900;color:var(--gold);margin-bottom:6px;}
+.auth-sub{font-size:0.78rem;color:var(--muted);margin-bottom:28px;}
+.auth-input{width:100%;background:var(--card2);border:1px solid var(--border);border-radius:10px;padding:12px 16px;color:var(--white);font-size:0.9rem;font-family:var(--sans);margin-bottom:12px;}
+.auth-input:focus{outline:none;border-color:rgba(201,168,76,0.4);}
+.auth-btn{width:100%;background:linear-gradient(135deg,#8B5C00,var(--gold));color:#000;border:none;border-radius:10px;padding:13px;font-weight:800;font-size:0.88rem;cursor:pointer;}
+
+/* ── MAIN APP ── */
+#main-app{display:none;}
+header{background:var(--card);border-bottom:1px solid var(--border);padding:14px 20px;display:flex;align-items:center;justify-content:space-between;}
+.header-logo{font-family:var(--serif);font-weight:900;font-size:1rem;color:var(--gold);}
+.header-logo span{color:var(--white);}
+.header-badge{font-size:0.65rem;background:rgba(255,69,96,0.15);color:var(--red);border:1px solid rgba(255,69,96,0.3);border-radius:50px;padding:3px 10px;font-weight:700;}
+
+/* ── STATS ── */
+.stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:12px;padding:20px;margin-bottom:4px;}
+.stat{background:var(--card);border:1px solid var(--border);border-radius:14px;padding:16px;text-align:center;}
+.stat-val{font-family:var(--serif);font-size:1.8rem;font-weight:900;color:var(--gold);}
+.stat-lbl{font-size:0.65rem;color:var(--muted);text-transform:uppercase;letter-spacing:0.1em;margin-top:4px;}
+
+/* ── PANELS ── */
+.panel{background:var(--card);border:1px solid var(--border);border-radius:16px;padding:20px;margin:0 20px 16px;}
+.panel-title{font-family:var(--serif);font-weight:700;color:var(--gold);margin-bottom:16px;font-size:1rem;display:flex;align-items:center;gap:8px;}
+.form-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;}
+.form-group{display:flex;flex-direction:column;gap:6px;}
+.form-group.full{grid-column:1/-1;}
+.form-group label{font-size:0.72rem;color:var(--muted);text-transform:uppercase;letter-spacing:0.08em;font-weight:600;}
+.form-group input,.form-group select{background:var(--card2);border:1px solid var(--border);border-radius:10px;padding:10px 14px;color:var(--white);font-size:0.85rem;font-family:var(--sans);}
+.form-group input:focus,.form-group select:focus{outline:none;border-color:rgba(201,168,76,0.4);}
+.form-group select option{background:var(--card2);}
+
+/* ── BUTTONS ── */
+.btn{border:none;border-radius:10px;padding:10px 18px;font-weight:700;cursor:pointer;font-family:var(--sans);font-size:0.82rem;display:inline-flex;align-items:center;gap:6px;}
+.btn-primary{background:linear-gradient(135deg,#8B5C00,var(--gold));color:#000;}
+.btn-success{background:rgba(13,183,106,0.15);border:1px solid rgba(13,183,106,0.3);color:var(--green);}
+.btn-danger{background:rgba(255,69,96,0.12);border:1px solid rgba(255,69,96,0.25);color:var(--red);}
+.btn-ghost{background:transparent;border:1px solid var(--border);color:var(--muted);}
+.btn-sm{padding:6px 12px;font-size:0.72rem;}
+
+/* ── SCHOOL TABLE ── */
+.tbl-wrap{overflow-x:auto;border-radius:12px;border:1px solid var(--border);}
+table{width:100%;border-collapse:collapse;font-size:0.78rem;}
+th{padding:10px 14px;text-align:left;font-size:0.65rem;color:var(--muted);text-transform:uppercase;letter-spacing:0.08em;background:rgba(255,255,255,0.02);border-bottom:1px solid var(--border);}
+td{padding:12px 14px;border-bottom:1px solid rgba(255,255,255,0.04);}
+tr:last-child td{border-bottom:none;}
+.badge{font-size:0.62rem;padding:3px 10px;border-radius:50px;font-weight:700;display:inline-block;}
+.badge-active{background:rgba(13,183,106,0.12);color:var(--green);border:1px solid rgba(13,183,106,0.25);}
+.badge-inactive{background:rgba(255,69,96,0.1);color:var(--red);border:1px solid rgba(255,69,96,0.2);}
+.badge-plan{background:rgba(201,168,76,0.1);color:var(--gold);border:1px solid rgba(201,168,76,0.2);}
+
+/* ── TOAST ── */
+#toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%);background:var(--card2);border:1px solid var(--border);border-radius:12px;padding:10px 20px;font-size:0.82rem;color:var(--white);z-index:9999;display:none;white-space:nowrap;box-shadow:0 8px 24px rgba(0,0,0,0.4);}
+
+@media(max-width:600px){.form-grid{grid-template-columns:1fr;}.stats{grid-template-columns:repeat(2,1fr);}}
+</style>
+</head>
+<body>
+
+<!-- AUTH -->
+<div id="auth-screen">
+  <div class="auth-card">
+    <div style="font-size:3rem;margin-bottom:12px;">🔐</div>
+    <div class="auth-logo">Rehoteq Technologies</div>
+    <div class="auth-sub">Super Admin — Master Control Portal</div>
+    <input type="password" class="auth-input" id="sa-password" placeholder="Enter master password" onkeydown="if(event.key==='Enter')authenticate()"/>
+    <button class="auth-btn" onclick="authenticate()">Access Portal</button>
+    <div style="margin-top:16px;font-size:0.7rem;color:var(--muted2);">🔒 This portal is for Rehoteq Technologies internal use only</div>
+  </div>
+</div>
+
+<!-- MAIN APP -->
+<div id="main-app">
+  <header>
+    <div>
+      <div class="header-logo">Rehoteq <span>Super Admin</span></div>
+      <div style="font-size:0.65rem;color:var(--muted);margin-top:2px;" id="sa-date"></div>
+    </div>
+    <div style="display:flex;align-items:center;gap:10px;">
+      <span class="header-badge">INTERNAL ONLY</span>
+      <button class="btn btn-ghost btn-sm" onclick="location.href='index.html'">← Back to RMS</button>
+    </div>
+  </header>
+
+  <!-- Stats -->
+  <div class="stats">
+    <div class="stat"><div class="stat-val" id="stat-total">—</div><div class="stat-lbl">Total Schools</div></div>
+    <div class="stat"><div class="stat-val" id="stat-active" style="color:var(--green);">—</div><div class="stat-lbl">Active</div></div>
+    <div class="stat"><div class="stat-val" id="stat-students">—</div><div class="stat-lbl">Est. Students</div></div>
+    <div class="stat"><div class="stat-val" id="stat-revenue" style="color:var(--gold);">—</div><div class="stat-lbl">Term Revenue</div></div>
+  </div>
+
+  <!-- Register New School -->
+  <div class="panel">
+    <div class="panel-title">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>
+      Register New School
+    </div>
+    <div class="form-grid">
+      <div class="form-group">
+        <label>School ID *</label>
+        <input type="text" id="reg-id" placeholder="e.g. RMS-0003" oninput="this.value=this.value.toUpperCase()"/>
+      </div>
+      <div class="form-group">
+        <label>School Name *</label>
+        <input type="text" id="reg-name" placeholder="e.g. Faith Academy"/>
+      </div>
+      <div class="form-group">
+        <label>Plan *</label>
+        <select id="reg-plan">
+          <option value="basic">Basic — ₦10,000/term</option>
+          <option value="standard" selected>Standard — ₦20,000/term</option>
+          <option value="premium">Premium — ₦25,000/term</option>
+          <option value="whitelabel">White Label — ₦100,000/term</option>
+          <option value="enterprise">Enterprise — ₦350,000/year</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label>Firebase Band *</label>
+        <select id="reg-band">
+          <option value="A">Band A (RMS-0002 to 0010)</option>
+          <option value="anchor">Anchor — Own Firebase</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label>Principal Name</label>
+        <input type="text" id="reg-principal" placeholder="e.g. Mr. Adebayo"/>
+      </div>
+      <div class="form-group">
+        <label>Phone</label>
+        <input type="tel" id="reg-phone" placeholder="e.g. 08012345678"/>
+      </div>
+      <div class="form-group">
+        <label>LGA</label>
+        <input type="text" id="reg-lga" placeholder="e.g. Okitipupa"/>
+      </div>
+      <div class="form-group">
+        <label>State</label>
+        <input type="text" id="reg-state" placeholder="e.g. Ondo"/>
+      </div>
+      <div class="form-group">
+        <label>Est. Students</label>
+        <input type="number" id="reg-students" placeholder="e.g. 250"/>
+      </div>
+      <div class="form-group">
+        <label>Onboarding Ref</label>
+        <input type="text" id="reg-ref" placeholder="e.g. RMS-MNQ1VT5S"/>
+      </div>
+    </div>
+    <div style="display:flex;gap:10px;margin-top:16px;flex-wrap:wrap;">
+      <button class="btn btn-primary" onclick="registerSchool()">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M22 11.08V12a10 10 0 11-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
+        Activate School
+      </button>
+      <button class="btn btn-ghost" onclick="clearRegForm()">Clear</button>
+    </div>
+  </div>
+
+  <!-- All Schools -->
+  <div class="panel">
+    <div class="panel-title">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+      All Registered Schools
+      <button class="btn btn-ghost btn-sm" style="margin-left:auto;" onclick="loadSchools()">↻ Refresh</button>
+    </div>
+    <div class="tbl-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>School ID</th><th>School Name</th><th>Plan</th>
+            <th>Principal</th><th>State</th><th>Students</th>
+            <th>Activated</th><th>Status</th><th>Actions</th>
+          </tr>
+        </thead>
+        <tbody id="schools-tbody"></tbody>
+      </table>
+    </div>
+  </div>
+
+</div>
+
+<div id="toast"></div>
+
+<script>
+// ══════════════════════════════════════════════════
+//  MASTER FIREBASE CONFIG
+//  Reads/writes schools/ path in gtc-okitipupa DB
+// ══════════════════════════════════════════════════
+const MASTER_CONFIG = {
+  apiKey:      "AIzaSyAlGrnex8GCd6Ciw_cggrEiA9nhSnEfFMU",
+  authDomain:  "gtc-okitipupa.firebaseapp.com",
+  databaseURL: "https://gtc-okitipupa-default-rtdb.firebaseio.com",
+  projectId:   "gtc-okitipupa",
+  appId:       "1:822961195945:web:a05839b2d488bec61792b8"
+};
+
+const SUPER_PASS = 'rehoteq@superadmin2025';
+
+// Band Firebase configs
+const BAND_CONFIGS = {
+  A: {
+    apiKey:            "AIzaSyB58-gy53vFUj3KnG0BT3VcEyzZyTUrl-Y",
+    authDomain:        "rehoteq-rms-a.firebaseapp.com",
+    databaseURL:       "https://rehoteq-rms-a-default-rtdb.firebaseio.com",
+    projectId:         "rehoteq-rms-a",
+    storageBucket:     "rehoteq-rms-a.firebasestorage.app",
+    messagingSenderId: "824347389926",
+    appId:             "1:824347389926:web:db0efdbb22ebd0337db027"
+  }
+};
+
+const PLAN_PRICES = {
+  basic: 10000, standard: 20000, premium: 25000,
+  whitelabel: 100000, enterprise: 350000
+};
+
+let MASTER_DB = null;
+
+function toast(msg, type) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.style.display = 'block';
+  t.style.borderColor = type==='error' ? 'rgba(255,69,96,0.4)' :
+                        type==='success' ? 'rgba(13,183,106,0.4)' : 'var(--border)';
+  setTimeout(() => t.style.display = 'none', 3500);
+}
+
+function authenticate() {
+  const pass = document.getElementById('sa-password').value;
+  if (pass !== SUPER_PASS) {
+    toast('Wrong master password', 'error');
+    return;
+  }
+  document.getElementById('auth-screen').style.display = 'none';
+  document.getElementById('main-app').style.display = 'block';
+  document.getElementById('sa-date').textContent = new Date().toLocaleDateString('en-NG', {weekday:'long',year:'numeric',month:'long',day:'numeric'});
+
+  // Init master Firebase (v8 SDK)
+  try {
+    let app;
+    try {
+      app = firebase.app('sa-master');
+    } catch(e) {
+      app = firebase.initializeApp(MASTER_CONFIG, 'sa-master');
+    }
+    MASTER_DB = app.database();
+    toast('Connected to master database', 'success');
+  } catch(e) {
+    toast('Firebase connection failed: ' + e.message, 'error');
+    console.error(e);
+    return;
+  }
+  loadSchools();
+}
+
+async function loadSchools() {
+  const tbody = document.getElementById('schools-tbody');
+  if (!MASTER_DB) {
+    tbody.innerHTML = '<tr><td colspan="9" style="text-align:center;padding:20px;color:var(--red);">Not connected. Please refresh and login again.</td></tr>';
+    return;
+  }
+  tbody.innerHTML = '<tr><td colspan="9" style="text-align:center;padding:20px;color:var(--muted);">⏳ Loading...</td></tr>';
+
+  let schools = {}, list = [];
+  try {
+    const snap = await MASTER_DB.ref('schools').once('value');
+    schools = snap.val() || {};
+    list = Object.entries(schools).map(([id, s]) => ({ id, ...s }))
+      .sort((a,b) => a.id.localeCompare(b.id));
+  } catch(e) {
+    tbody.innerHTML = '<tr><td colspan="9" style="text-align:center;padding:20px;color:var(--red);">Error: ' + e.message + '</td></tr>';
+    return;
+  }
+
+  // Stats
+  const active  = list.filter(s => s.active).length;
+  const studs   = list.reduce((a,s) => a + (parseInt(s.students)||0), 0);
+  const revenue = list.filter(s => s.active).reduce((a,s) => a + (PLAN_PRICES[s.plan]||0), 0);
+  document.getElementById('stat-total').textContent   = list.length;
+  document.getElementById('stat-active').textContent  = active;
+  document.getElementById('stat-students').textContent = studs || '—';
+  document.getElementById('stat-revenue').textContent  = revenue ? '₦' + revenue.toLocaleString() : '—';
+
+  if (!list.length) {
+    tbody.innerHTML = '<tr><td colspan="9" style="text-align:center;padding:20px;color:var(--muted);">No schools yet. Register the first school above.</td></tr>';
+    return;
+  }
+
+  tbody.innerHTML = list.map(s => `
+    <tr>
+      <td><span style="font-family:var(--mono);font-weight:700;color:var(--gold);">${s.id}</span></td>
+      <td style="font-weight:600;">${s.name || '—'}</td>
+      <td><span class="badge badge-plan">${(s.plan||'basic').toUpperCase()}</span></td>
+      <td style="font-size:0.75rem;">${s.principal || '—'}</td>
+      <td style="font-size:0.75rem;">${s.state || '—'}</td>
+      <td style="text-align:center;">${s.students || '—'}</td>
+      <td style="font-size:0.7rem;color:var(--muted);">${s.activated || '—'}</td>
+      <td><span class="badge ${s.active ? 'badge-active' : 'badge-inactive'}">${s.active ? 'Active' : 'Inactive'}</span></td>
+      <td style="display:flex;gap:4px;">
+        <button class="btn btn-success btn-sm" onclick="toggleSchool('${s.id}',${!s.active})">${s.active ? 'Suspend' : 'Activate'}</button>
+        <button class="btn btn-danger btn-sm" onclick="deleteSchool('${s.id}','${s.name||s.id}')">Delete</button>
+      </td>
+    </tr>`).join('');
+}
+
+async function registerSchool() {
+  const id        = document.getElementById('reg-id').value.trim().toUpperCase();
+  const name      = document.getElementById('reg-name').value.trim();
+  const plan      = document.getElementById('reg-plan').value;
+  const band      = document.getElementById('reg-band').value;
+  const principal = document.getElementById('reg-principal').value.trim();
+  const phone     = document.getElementById('reg-phone').value.trim();
+  const lga       = document.getElementById('reg-lga').value.trim();
+  const state     = document.getElementById('reg-state').value.trim();
+  const students  = document.getElementById('reg-students').value.trim();
+  const ref       = document.getElementById('reg-ref').value.trim();
+
+  if (!id || !name) { toast('School ID and Name are required', 'error'); return; }
+  if (!id.match(/^RMS-\d{4}$/)) { toast('School ID must be format RMS-XXXX (e.g. RMS-0003)', 'error'); return; }
+
+  // Check if already exists
+  const existing = await MASTER_DB.ref('schools/' + id).once('value');
+  if (existing.val()) {
+    if (!confirm(id + ' already exists. Overwrite?')) return;
+  }
+
+  // Get band config
+  const bandConfig = BAND_CONFIGS[band] || BAND_CONFIGS['A'];
+
+  const schoolData = {
+    name,
+    plan,
+    principal:   principal || '',
+    phone:       phone     || '',
+    lga:         lga       || '',
+    state:       state     || '',
+    students:    parseInt(students) || 0,
+    ref:         ref       || '',
+    band:        band,
+    // Firebase connection details for this school
+    apiKey:            bandConfig.apiKey,
+    authDomain:        bandConfig.authDomain,
+    databaseURL:       bandConfig.databaseURL,
+    projectId:         bandConfig.projectId,
+    storageBucket:     bandConfig.storageBucket   || '',
+    messagingSenderId: bandConfig.messagingSenderId || '',
+    appId:             bandConfig.appId            || '',
+    active:     true,
+    activated:  new Date().toISOString().split('T')[0],
+    addedBy:    'Rehoteq Super Admin'
+  };
+
+  if (!MASTER_DB) {
+    toast('Not connected to database. Please re-login.', 'error');
+    return;
+  }
+
+  try {
+    await MASTER_DB.ref('schools/' + id).set(schoolData);
+    toast('✅ ' + name + ' activated as ' + id + '!', 'success');
+    clearRegForm();
+    loadSchools();
+  } catch(e) {
+    toast('Failed to save: ' + e.message, 'error');
+    console.error('registerSchool error:', e);
+  }
+}
+
+async function toggleSchool(id, active) {
+  await MASTER_DB.ref('schools/' + id).update({ active });
+  toast(id + (active ? ' activated' : ' suspended'), active ? 'success' : 'error');
+  loadSchools();
+}
+
+async function deleteSchool(id, name) {
+  if (!confirm('Permanently delete ' + name + ' (' + id + ')?\n\nThis removes them from the master registry. Their Firebase data is NOT deleted.')) return;
+  await MASTER_DB.ref('schools/' + id).remove();
+  toast(id + ' removed from registry', 'success');
+  loadSchools();
+}
+
+function clearRegForm() {
+  ['reg-id','reg-name','reg-principal','reg-phone','reg-lga','reg-state','reg-students','reg-ref']
+    .forEach(id => { const el = document.getElementById(id); if(el) el.value = ''; });
+  document.getElementById('reg-plan').value = 'standard';
+  document.getElementById('reg-band').value = 'A';
+}
+
+// ── Pre-register His Mercy Schools ──
+// Called once to seed the master registry with existing schools
+async function seedExistingSchools() {
+  // RMS-0001 = internal dev/test ground — NOT registered as a school
+  // GTC Okitipupa = separate pro bono deployment on own Firebase (untouched)
+  const existing = {
+    'RMS-0002': {
+      name: 'His Mercy Schools', plan: 'standard',
+      principal: 'Mr. Olotu Adeniyi', phone: '08036607155',
+      lga: 'Okitipupa', state: 'Ondo', students: 250, band: 'A',
+      ref: 'RMS-MNQ1VT5S',
+      apiKey:            'AIzaSyB58-gy53vFUj3KnG0BT3VcEyzZyTUrl-Y',
+      authDomain:        'rehoteq-rms-a.firebaseapp.com',
+      databaseURL:       'https://rehoteq-rms-a-default-rtdb.firebaseio.com',
+      projectId:         'rehoteq-rms-a', appId: '1:824347389926:web:db0efdbb22ebd0337db027',
+      active: true, activated: '2026-04-08'
+    }
+  };
+  for (const [id, data] of Object.entries(existing)) {
+    const snap = await MASTER_DB.ref('schools/' + id).once('value');
+    if (!snap.val()) {
+      await MASTER_DB.ref('schools/' + id).set({ ...data, addedBy: 'Seed' });
+      console.log('Seeded', id);
+    }
+  }
+  toast('✅ Schools seeded to master registry', 'success');
+  loadSchools();
+}
+</script>
+</body>
+</html>
