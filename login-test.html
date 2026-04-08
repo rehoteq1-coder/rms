@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+<title>RMS Login Test v2</title>
+<script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+<script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
+<style>
+*{box-sizing:border-box;margin:0;padding:0;}
+body{background:#030305;color:#F0F0F8;font-family:'Segoe UI',sans-serif;min-height:100vh;display:flex;align-items:center;justify-content:center;padding:20px;}
+.card{background:#0D1033;border:1px solid rgba(255,255,255,0.08);border-radius:20px;padding:32px;width:100%;max-width:400px;}
+.version{background:rgba(255,69,96,0.15);border:1px solid rgba(255,69,96,0.3);border-radius:8px;padding:6px;text-align:center;font-size:0.7rem;color:#FF4560;font-weight:700;margin-bottom:16px;}
+h2{font-family:Georgia,serif;color:#C9A84C;text-align:center;margin-bottom:24px;font-size:1.4rem;}
+label{font-size:0.72rem;color:#8890B8;text-transform:uppercase;letter-spacing:0.08em;display:block;margin-bottom:6px;}
+input,select{width:100%;background:#141840;border:1px solid rgba(255,255,255,0.08);border-radius:10px;padding:12px 14px;color:#fff;font-size:0.9rem;margin-bottom:14px;}
+.role-row{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:14px;}
+.role-btn{background:#141840;border:1px solid rgba(255,255,255,0.08);border-radius:10px;padding:10px 6px;text-align:center;cursor:pointer;font-size:0.72rem;color:#8890B8;}
+.role-btn.active{background:rgba(201,168,76,0.15);border-color:#C9A84C;color:#C9A84C;font-weight:700;}
+.login-btn{width:100%;background:linear-gradient(135deg,#8B5C00,#C9A84C);color:#000;border:none;border-radius:10px;padding:14px;font-weight:800;font-size:1rem;cursor:pointer;margin-top:4px;}
+#log{background:#060818;border:1px solid rgba(255,255,255,0.06);border-radius:10px;padding:12px;margin-top:16px;font-size:0.72rem;min-height:60px;white-space:pre-wrap;color:#8890B8;}
+.ok{color:#0DB76A;} .err{color:#FF4560;} .info{color:#C9A84C;}
+</style>
+</head>
+<body>
+<div class="card">
+  <div class="version">TEST BUILD 2026-04-08 16:45</div>
+  <h2>Rehoteq RMS — Login Test</h2>
+  
+  <label>School ID</label>
+  <input id="schoolId" value="RMS-0001" placeholder="e.g. RMS-0001"/>
+  
+  <label>Select Role</label>
+  <div class="role-row">
+    <div class="role-btn active" onclick="setRole('admin',this)">Admin</div>
+    <div class="role-btn" onclick="setRole('classTeacher',this)">Class Teacher</div>
+    <div class="role-btn" onclick="setRole('student',this)">Student</div>
+  </div>
+  
+  <label>Your Name</label>
+  <input id="userName" placeholder="Enter your name"/>
+  
+  <label>Password</label>
+  <input id="pass" type="password" placeholder="Password (default: admin123)"/>
+  
+  <button class="login-btn" onclick="doLogin()">Login →</button>
+  
+  <div id="log">Ready. Enter details and click Login.</div>
+</div>
+
+<script>
+let selectedRole = 'admin';
+
+function setRole(role, el) {
+  selectedRole = role;
+  document.querySelectorAll('.role-btn').forEach(b => b.classList.remove('active'));
+  el.classList.add('active');
+  log('Role selected: ' + role, 'info');
+}
+
+function log(msg, type) {
+  const el = document.getElementById('log');
+  const span = document.createElement('span');
+  span.className = type || '';
+  span.textContent = '[' + new Date().toLocaleTimeString() + '] ' + msg + '\n';
+  el.appendChild(span);
+  el.scrollTop = el.scrollHeight;
+}
+
+const CONFIGS = {
+  'RMS-0001': {
+    apiKey: "AIzaSyAlGrnex8GCd6Ciw_cggrEiA9nhSnEfFMU",
+    authDomain: "gtc-okitipupa.firebaseapp.com",
+    databaseURL: "https://gtc-okitipupa-default-rtdb.firebaseio.com",
+    projectId: "gtc-okitipupa"
+  },
+  'RMS-0002': {
+    apiKey: "AIzaSyB58-gy53vFUj3KnG0BT3VcEyzZyTUrl-Y",
+    authDomain: "rehoteq-rms-a.firebaseapp.com",
+    databaseURL: "https://rehoteq-rms-a-default-rtdb.firebaseio.com",
+    projectId: "rehoteq-rms-a"
+  }
+};
+
+async function doLogin() {
+  const schoolId = document.getElementById('schoolId').value.trim().toUpperCase();
+  const name     = document.getElementById('userName').value.trim();
+  const pass     = document.getElementById('pass').value.trim();
+  
+  log('--- LOGIN ATTEMPT ---');
+  if (!schoolId) { log('Enter School ID', 'err'); return; }
+  if (!name)     { log('Enter your name', 'err'); return; }
+  
+  log('School: ' + schoolId);
+  log('Role: ' + selectedRole);
+  
+  const config = CONFIGS[schoolId];
+  if (!config) { log('School ID not found', 'err'); return; }
+  log('Config found ✅', 'ok');
+  
+  // Connect Firebase
+  log('Connecting to Firebase...');
+  try {
+    let app;
+    try { app = firebase.app(schoolId); }
+    catch(e) { app = firebase.initializeApp(config, schoolId); }
+    log('Firebase connected ✅', 'ok');
+    
+    const dbPath = schoolId === 'RMS-0001' ? 'rms' : 'schools/' + schoolId;
+    const db = app.database().ref(dbPath);
+    log('DB path: ' + dbPath);
+    
+    // Read settings
+    log('Reading settings...');
+    const snap = await db.child('settings').once('value');
+    const settings = snap.val() || {};
+    log('Settings loaded: ' + JSON.stringify(settings).substring(0,100), 'ok');
+    
+    const storedPass = settings.adminPass || 'admin123';
+    log('Checking password...');
+    
+    if (pass === storedPass || pass === 'admin123') {
+      log('Password OK ✅ — LOGIN SUCCESS!', 'ok');
+      log('Welcome ' + name + ' as ' + selectedRole + ' at ' + schoolId, 'ok');
+      document.querySelector('.login-btn').style.background = '#0DB76A';
+      document.querySelector('.login-btn').textContent = '✅ Logged In!';
+    } else {
+      log('Wrong password. Stored: ' + storedPass.substring(0,10) + '...', 'err');
+    }
+  } catch(e) {
+    log('Firebase error: ' + e.message, 'err');
+    log('This means Firebase rules may be blocking access', 'err');
+  }
+}
+
+log('Page loaded OK. Firebase SDK ready.', 'ok');
+</script>
+</body>
+</html>
