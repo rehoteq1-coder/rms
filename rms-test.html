@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8"/>
+<title>RMS Login Test</title>
+<script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+<script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
+<style>
+body{background:#030305;color:#fff;font-family:sans-serif;padding:20px;}
+input{background:#1a1e3a;border:1px solid #333;color:#fff;padding:10px;width:100%;margin:8px 0;border-radius:8px;font-size:1rem;}
+button{background:#C9A84C;color:#000;border:none;padding:12px 24px;border-radius:8px;font-weight:bold;font-size:1rem;cursor:pointer;width:100%;margin:8px 0;}
+#log{background:#0a0a1a;border:1px solid #333;padding:12px;border-radius:8px;margin-top:12px;font-size:0.8rem;min-height:100px;white-space:pre-wrap;}
+.ok{color:#0DB76A;} .err{color:#FF4560;} .info{color:#C9A84C;}
+</style>
+</head>
+<body>
+<h2 style="color:#C9A84C;">RMS Login Diagnostic</h2>
+
+<input id="schoolId" placeholder="School ID (e.g. RMS-0001)" value="RMS-0001"/>
+<input id="userName" placeholder="Your name"/>
+<input id="password" type="password" placeholder="Password"/>
+<button onclick="testLogin()">Test Login</button>
+<button onclick="testFirebase()" style="background:#1a1e3a;color:#C9A84C;border:1px solid #C9A84C;">Test Firebase Only</button>
+
+<div id="log">Waiting...</div>
+
+<script>
+function log(msg, type) {
+  const el = document.getElementById('log');
+  const cls = type || 'info';
+  el.innerHTML += '<span class="'+cls+'">['+new Date().toLocaleTimeString()+'] '+msg+'</span>
+';
+  console.log(msg);
+}
+
+const CONFIGS = {
+  'RMS-0001': {
+    apiKey: "AIzaSyAlGrnex8GCd6Ciw_cggrEiA9nhSnEfFMU",
+    databaseURL: "https://gtc-okitipupa-default-rtdb.firebaseio.com",
+    projectId: "gtc-okitipupa"
+  },
+  'RMS-0002': {
+    apiKey: "AIzaSyB58-gy53vFUj3KnG0BT3VcEyzZyTUrl-Y",
+    databaseURL: "https://rehoteq-rms-a-default-rtdb.firebaseio.com",
+    projectId: "rehoteq-rms-a"
+  }
+};
+
+async function testFirebase() {
+  const schoolId = document.getElementById('schoolId').value.trim().toUpperCase();
+  const config = CONFIGS[schoolId];
+  if (!config) { log('School ID not found in config', 'err'); return; }
+  
+  log('Connecting to Firebase for ' + schoolId + '...');
+  try {
+    let app;
+    try { app = firebase.app('test-'+schoolId); log('Reusing existing app'); }
+    catch(e) { app = firebase.initializeApp(config, 'test-'+schoolId); log('New Firebase app created'); }
+    
+    const dbPath = schoolId === 'RMS-0001' ? 'rms' : 'schools/' + schoolId;
+    const db = app.database().ref(dbPath);
+    log('DB path: ' + dbPath);
+    
+    log('Reading settings...');
+    const snap = await db.child('settings').once('value');
+    const settings = snap.val();
+    log('Settings: ' + JSON.stringify(settings), settings ? 'ok' : 'info');
+    
+    if (settings) {
+      log('Admin pass stored: ' + (settings.adminPass ? 'YES ('+settings.adminPass.length+' chars)' : 'NO — will use admin123'), 'ok');
+    } else {
+      log('No settings yet — new school. Default password: admin123', 'info');
+    }
+    
+    log('Firebase connection WORKING ✅', 'ok');
+  } catch(e) {
+    log('Firebase ERROR: ' + e.message, 'err');
+  }
+}
+
+async function testLogin() {
+  const schoolId = document.getElementById('schoolId').value.trim().toUpperCase();
+  const name     = document.getElementById('userName').value.trim();
+  const pass     = document.getElementById('password').value.trim();
+  
+  log('--- LOGIN TEST ---');
+  log('School: ' + schoolId);
+  log('Name: ' + name);
+  log('Pass length: ' + pass.length);
+  
+  const config = CONFIGS[schoolId];
+  if (!config) { log('No config for ' + schoolId, 'err'); return; }
+  
+  log('Config found ✅ — ' + config.databaseURL);
+  
+  // SHA-256 hash
+  try {
+    const encoded = new TextEncoder().encode(pass);
+    const hashBuf = await crypto.subtle.digest('SHA-256', encoded);
+    const hash = Array.from(new Uint8Array(hashBuf)).map(b=>b.toString(16).padStart(2,'0')).join('');
+    log('SHA-256 of password: ' + hash.substring(0,20) + '...', 'ok');
+  } catch(e) {
+    log('Crypto error: ' + e.message, 'err');
+  }
+  
+  // Try Firebase
+  await testFirebase();
+  
+  log('--- ALL CHECKS DONE ---', 'ok');
+}
+
+log('Page loaded. Click a button to test.', 'ok');
+</script>
+</body>
+</html>
