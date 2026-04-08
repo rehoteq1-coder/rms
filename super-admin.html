@@ -198,6 +198,88 @@ tr:last-child td{border-bottom:none;}
 
 </div>
 
+<!-- MESSAGING HUB -->
+<div class="panel" id="messaging-panel">
+  <div class="panel-title">
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" style="margin-right:6px;vertical-align:middle;"><path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/></svg>
+    Communication Hub
+    <span style="font-size:0.65rem;background:rgba(201,168,76,0.12);color:var(--gold);border:1px solid rgba(201,168,76,0.25);border-radius:50px;padding:2px 10px;margin-left:8px;">Rehoteq Branded</span>
+  </div>
+
+  <!-- Quick Templates -->
+  <div style="margin-bottom:16px;">
+    <div style="font-size:0.7rem;color:var(--muted);text-transform:uppercase;letter-spacing:0.08em;margin-bottom:10px;font-weight:600;">Quick Templates</div>
+    <div style="display:flex;gap:8px;flex-wrap:wrap;">
+      <button class="btn btn-ghost btn-sm" onclick="loadTemplate('welcome')">🎉 Welcome / Onboarding</button>
+      <button class="btn btn-ghost btn-sm" onclick="loadTemplate('payment')">💰 Payment Reminder</button>
+      <button class="btn btn-ghost btn-sm" onclick="loadTemplate('renewal')">🔄 Term Renewal</button>
+      <button class="btn btn-ghost btn-sm" onclick="loadTemplate('feature')">✨ New Feature Alert</button>
+      <button class="btn btn-ghost btn-sm" onclick="loadTemplate('maintenance')">🔧 Maintenance Notice</button>
+      <button class="btn btn-ghost btn-sm" onclick="loadTemplate('custom')">✏️ Custom Message</button>
+    </div>
+  </div>
+
+  <div class="form-grid">
+    <!-- Recipient -->
+    <div class="form-group">
+      <label>Send To</label>
+      <select id="msg-recipient" onchange="onRecipientChange()" class="form-select" style="background:var(--card2);border:1px solid var(--border);border-radius:10px;padding:10px 14px;color:var(--white);font-size:0.85rem;">
+        <option value="">Select recipient...</option>
+        <option value="ALL">📢 All Active Schools</option>
+        <option value="custom">✏️ Custom (enter below)</option>
+      </select>
+    </div>
+
+    <!-- Channel -->
+    <div class="form-group">
+      <label>Send Via</label>
+      <select id="msg-channel" class="form-select" style="background:var(--card2);border:1px solid var(--border);border-radius:10px;padding:10px 14px;color:var(--white);font-size:0.85rem;">
+        <option value="whatsapp">💬 WhatsApp</option>
+        <option value="email">📧 Email (mailto)</option>
+        <option value="both">📲 Both WhatsApp + Email</option>
+      </select>
+    </div>
+
+    <!-- Custom phone/email (shown when custom selected) -->
+    <div class="form-group" id="custom-contact-group" style="display:none;">
+      <label>Phone / Email</label>
+      <input type="text" id="msg-custom-contact" placeholder="08012345678 or email@school.com" style="background:var(--card2);border:1px solid var(--border);border-radius:10px;padding:10px 14px;color:var(--white);font-size:0.85rem;"/>
+    </div>
+
+    <!-- Subject (email only) -->
+    <div class="form-group" id="msg-subject-group">
+      <label>Subject (Email)</label>
+      <input type="text" id="msg-subject" placeholder="e.g. Welcome to Rehoteq RMS" style="background:var(--card2);border:1px solid var(--border);border-radius:10px;padding:10px 14px;color:var(--white);font-size:0.85rem;"/>
+    </div>
+
+    <!-- Message body -->
+    <div class="form-group full">
+      <label>Message</label>
+      <textarea id="msg-body" rows="8" placeholder="Type your message here..." style="background:var(--card2);border:1px solid var(--border);border-radius:10px;padding:12px 14px;color:var(--white);font-size:0.85rem;font-family:var(--sans);resize:vertical;width:100%;"></textarea>
+    </div>
+  </div>
+
+  <!-- Preview -->
+  <div id="msg-preview" style="display:none;background:rgba(201,168,76,0.04);border:1px solid rgba(201,168,76,0.15);border-radius:12px;padding:14px;margin:12px 0;">
+    <div style="font-size:0.68rem;color:var(--gold);text-transform:uppercase;letter-spacing:0.1em;margin-bottom:8px;font-weight:700;">Preview — As recipient will see it</div>
+    <div id="msg-preview-text" style="font-size:0.82rem;color:var(--white);white-space:pre-wrap;line-height:1.65;"></div>
+  </div>
+
+  <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:4px;">
+    <button class="btn btn-ghost btn-sm" onclick="previewMessage()">👁️ Preview</button>
+    <button class="btn btn-primary" onclick="sendMessages()" id="send-btn">
+      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" style="margin-right:4px;"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
+      Send Message
+    </button>
+  </div>
+
+  <!-- Message Log -->
+  <div style="margin-top:20px;border-top:1px solid var(--border);padding-top:16px;">
+    <div style="font-size:0.7rem;color:var(--muted);text-transform:uppercase;letter-spacing:0.08em;margin-bottom:10px;font-weight:600;">Sent Log</div>
+    <div id="msg-log" style="font-size:0.75rem;color:var(--muted);"></div>
+  </div>
+</div>
+
 <div id="toast"></div>
 
 <script>
@@ -270,6 +352,8 @@ function authenticate() {
     return;
   }
   loadSchools();
+  populateMsgRecipients();
+  loadMessageLog();
 }
 
 async function loadSchools() {
@@ -433,6 +517,311 @@ async function seedExistingSchools() {
   toast('✅ Schools seeded to master registry', 'success');
   loadSchools();
 }
+// ══════════════════════════════════════════════════
+//  COMMUNICATION HUB
+// ══════════════════════════════════════════════════
+
+const REHOTEQ_SIGNATURE = `
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━
+*Rehoteq Technologies*
+School Management Solutions
+📞 07036302585 | 08166519177
+🌐 rehoteq.com
+_Okitipupa, Ondo State, Nigeria_
+━━━━━━━━━━━━━━━━━━━━━━━━━━`;
+
+const EMAIL_SIGNATURE = `
+
+---
+Rehoteq Technologies
+School Management Solutions
+📞 07036302585 | 08166519177
+🌐 rehoteq.com
+Okitipupa, Ondo State, Nigeria`;
+
+const TEMPLATES = {
+  welcome: {
+    subject: 'Welcome to Rehoteq RMS — Your School Is Now Live!',
+    body: `Dear {principal},
+
+On behalf of *Rehoteq Technologies*, I am delighted to welcome *{school}* to the Rehoteq Result Management System (RMS).
+
+Your school is now officially activated and ready for use.
+
+*Your Login Details:*
+🏫 School ID: *{school_id}*
+🔑 Default Password: *admin123*
+🌐 Login URL: https://rehoteq1-coder.github.io/rms
+
+*First Steps:*
+1. Login with your School ID and password
+2. Go to Admin Panel → Settings
+3. Change your password immediately
+4. Add your classes and subjects
+5. Start entering student data
+
+Our team is available to assist you at any time. Do not hesitate to reach out on WhatsApp or by email.
+
+Thank you for choosing Rehoteq Technologies. We are committed to making school management seamless for you.`
+  },
+
+  payment: {
+    subject: 'RMS Subscription — Payment Reminder',
+    body: `Dear {principal},
+
+This is a friendly reminder that your *Rehoteq RMS* subscription payment for *{school}* is due.
+
+*Account Details:*
+🏫 School: {school}
+🆔 School ID: {school_id}
+📋 Plan: {plan}
+
+Kindly make payment at your earliest convenience to avoid any disruption to your school's result management system.
+
+*Payment Details:*
+Bank: First Bank Nigeria
+Account Name: Rehoteq Technologies
+Account Number: [Your account number]
+
+Please send your payment receipt to this WhatsApp number after payment.
+
+Thank you for your continued trust in Rehoteq Technologies.`
+  },
+
+  renewal: {
+    subject: 'New Term — RMS Subscription Renewal',
+    body: `Dear {principal},
+
+A new academic term is approaching and we want to ensure *{school}* continues to enjoy uninterrupted access to the Rehoteq RMS.
+
+*Renewal Details:*
+🏫 School: {school}
+🆔 School ID: {school_id}
+📋 Plan: {plan}
+💰 Term Fee: {fee}
+
+To renew, simply make payment and send your receipt to us on WhatsApp. Your system will be renewed within 24 hours of confirmed payment.
+
+We look forward to continuing to serve your school this term.`
+  },
+
+  feature: {
+    subject: 'New Features Now Available on Rehoteq RMS',
+    body: `Dear {principal},
+
+We are excited to announce that *Rehoteq RMS* has been updated with powerful new features for your school.
+
+*What's New:*
+✅ Advanced Reports — Class rankings, subject analysis, term progress charts
+✅ Fee Management — Track payments, send WhatsApp reminders to parents
+✅ Timetable Generator — Build and print weekly timetables with clash detection
+✅ Offline Mode — Continue working even without internet, data syncs automatically
+
+These features are available on your current plan. Simply login to your RMS to start using them.
+
+🌐 Login: https://rehoteq1-coder.github.io/rms
+🆔 School ID: {school_id}
+
+As always, our team is available to guide you through any new feature.`
+  },
+
+  maintenance: {
+    subject: 'Scheduled Maintenance Notice — Rehoteq RMS',
+    body: `Dear {principal},
+
+We wish to inform you that *Rehoteq RMS* will undergo scheduled maintenance to improve system performance and security.
+
+*Maintenance Window:*
+📅 Date: [Insert Date]
+⏰ Time: [Insert Time]
+⏱️ Duration: Approximately [X] hours
+
+During this period, the system may be temporarily unavailable. We recommend completing any urgent score entries or reports before the maintenance window.
+
+We apologise for any inconvenience this may cause and appreciate your understanding.
+
+The system will be fully restored and improved after maintenance is complete.`
+  },
+
+  custom: {
+    subject: '',
+    body: ''
+  }
+};
+
+const PLAN_FEE_LABELS = {
+  basic: '₦10,000', standard: '₦20,000', premium: '₦25,000',
+  whitelabel: '₦100,000', enterprise: '₦350,000'
+};
+
+function onRecipientChange() {
+  const val = document.getElementById('msg-recipient').value;
+  const customGroup = document.getElementById('custom-contact-group');
+  if (customGroup) customGroup.style.display = (val === 'custom') ? 'block' : 'none';
+}
+
+function loadTemplate(key) {
+  const t = TEMPLATES[key];
+  if (!t) return;
+  const subj = document.getElementById('msg-subject');
+  const body = document.getElementById('msg-body');
+  if (subj) subj.value = t.subject;
+  if (body) body.value = t.body;
+  document.getElementById('msg-preview').style.display = 'none';
+  toast('Template loaded — personalise before sending', 'success');
+}
+
+function buildMessage(template, school) {
+  if (!school) return template;
+  return template
+    .replace(/{school}/g, school.name || '')
+    .replace(/{school_id}/g, school.id || '')
+    .replace(/{principal}/g, school.principal || 'Principal')
+    .replace(/{plan}/g, (school.plan || 'standard').charAt(0).toUpperCase() + (school.plan||'standard').slice(1))
+    .replace(/{fee}/g, PLAN_FEE_LABELS[school.plan] || '₦20,000');
+}
+
+function previewMessage() {
+  const body    = document.getElementById('msg-body').value.trim();
+  const channel = document.getElementById('msg-channel').value;
+  if (!body) { toast('Write a message first', 'error'); return; }
+
+  const sig = channel === 'email' ? EMAIL_SIGNATURE : REHOTEQ_SIGNATURE;
+  const full = body + sig;
+
+  document.getElementById('msg-preview-text').textContent = full;
+  document.getElementById('msg-preview').style.display = 'block';
+  document.getElementById('msg-preview').scrollIntoView({ behavior:'smooth' });
+}
+
+async function sendMessages() {
+  const recipient = document.getElementById('msg-recipient').value;
+  const channel   = document.getElementById('msg-channel').value;
+  const body      = document.getElementById('msg-body').value.trim();
+  const subject   = document.getElementById('msg-subject').value.trim();
+
+  if (!recipient) { toast('Select a recipient', 'error'); return; }
+  if (!body)      { toast('Write a message first', 'error'); return; }
+
+  const sig = channel === 'email' ? EMAIL_SIGNATURE : REHOTEQ_SIGNATURE;
+
+  // Get target schools
+  let schools = [];
+  if (recipient === 'ALL') {
+    // Get all active schools from Firebase
+    const snap = await MASTER_DB.ref('schools').once('value');
+    const all  = snap.val() || {};
+    schools = Object.entries(all)
+      .map(([id, s]) => ({ id, ...s }))
+      .filter(s => s.active);
+  } else if (recipient === 'custom') {
+    const contact = document.getElementById('msg-custom-contact').value.trim();
+    schools = [{ id: 'custom', name: 'Recipient', principal: 'Principal',
+      phone: contact.match(/^0/) ? contact : '',
+      email: contact.includes('@') ? contact : '',
+      plan: 'standard' }];
+  } else {
+    // Single school selected
+    const snap = await MASTER_DB.ref('schools/' + recipient).once('value');
+    const s    = snap.val();
+    if (s) schools = [{ id: recipient, ...s }];
+  }
+
+  if (!schools.length) { toast('No recipients found', 'error'); return; }
+
+  const btn = document.getElementById('send-btn');
+  if (btn) btn.disabled = true;
+
+  let sent = 0, failed = 0;
+  const logEl = document.getElementById('msg-log');
+
+  for (const school of schools) {
+    const finalMsg = buildMessage(body, school) + sig;
+
+    if (channel === 'whatsapp' || channel === 'both') {
+      if (school.phone) {
+        const phone = school.phone.replace(/[^0-9]/g,'').replace(/^0/,'234');
+        window.open('https://wa.me/' + phone + '?text=' + encodeURIComponent(finalMsg), '_blank');
+        sent++;
+        // Brief pause between opens
+        await new Promise(r => setTimeout(r, 1200));
+      } else {
+        failed++;
+        console.warn('No phone for', school.id);
+      }
+    }
+
+    if (channel === 'email' || channel === 'both') {
+      if (school.email || school.phone) {
+        const emailAddr = school.email || '';
+        const emailSubj = subject || 'Message from Rehoteq Technologies';
+        const mailtoLink = `mailto:${emailAddr}?subject=${encodeURIComponent(emailSubj)}&body=${encodeURIComponent(finalMsg)}`;
+        window.open(mailtoLink, '_blank');
+        sent++;
+        await new Promise(r => setTimeout(r, 800));
+      }
+    }
+
+    // Log to Firebase
+    const logKey = 'msglog/' + Date.now() + '_' + school.id;
+    await MASTER_DB.ref(logKey).set({
+      to:        school.id,
+      school:    school.name || school.id,
+      channel,
+      subject:   subject || '',
+      preview:   body.substring(0,100),
+      sentAt:    new Date().toISOString(),
+      sentBy:    'Rehoteq Super Admin'
+    }).catch(() => {});
+  }
+
+  if (btn) btn.disabled = false;
+  toast('✅ ' + sent + ' message(s) sent' + (failed ? ' · ' + failed + ' skipped (no contact)' : ''), 'success');
+
+  // Update log display
+  loadMessageLog();
+}
+
+async function loadMessageLog() {
+  const logEl = document.getElementById('msg-log');
+  if (!logEl || !MASTER_DB) return;
+  try {
+    const snap = await MASTER_DB.ref('msglog').limitToLast(10).once('value');
+    const logs = snap.val() || {};
+    const items = Object.values(logs).reverse();
+    if (!items.length) { logEl.innerHTML = '<span style="color:var(--muted2);">No messages sent yet.</span>'; return; }
+    logEl.innerHTML = items.map(l => `
+      <div style="padding:8px 0;border-bottom:1px solid var(--border);display:flex;justify-content:space-between;align-items:center;gap:10px;">
+        <div>
+          <span style="font-weight:600;color:var(--white);">${l.school}</span>
+          <span style="color:var(--muted);font-size:0.7rem;"> via ${l.channel}</span>
+          <div style="font-size:0.7rem;color:var(--muted);margin-top:2px;">${l.preview}...</div>
+        </div>
+        <div style="font-size:0.65rem;color:var(--muted2);text-align:right;white-space:nowrap;">${new Date(l.sentAt).toLocaleDateString('en-NG')}</div>
+      </div>`).join('');
+  } catch(e) { logEl.innerHTML = '<span style="color:var(--muted2);">Could not load log.</span>'; }
+}
+
+// Populate recipient dropdown with school list
+async function populateMsgRecipients() {
+  const sel = document.getElementById('msg-recipient');
+  if (!sel || !MASTER_DB) return;
+  try {
+    const snap = await MASTER_DB.ref('schools').once('value');
+    const schools = snap.val() || {};
+    const options = Object.entries(schools)
+      .filter(([,s]) => s.active)
+      .map(([id,s]) => `<option value="${id}">${s.name || id} (${id})</option>`)
+      .join('');
+    sel.innerHTML = `
+      <option value="">Select recipient...</option>
+      <option value="ALL">📢 All Active Schools</option>
+      ${options}
+      <option value="custom">✏️ Custom (enter below)</option>`;
+  } catch(e) { console.warn('Could not load recipients:', e); }
+}
+
 </script>
 </body>
 </html>
