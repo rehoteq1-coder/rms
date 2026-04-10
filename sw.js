@@ -95,4 +95,3 @@ self.addEventListener('sync', e => {
     );
   }
 });
-
