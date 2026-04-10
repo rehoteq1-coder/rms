@@ -1,28 +1,56 @@
 {
   "name": "Rehoteq RMS — School Result Management",
   "short_name": "Rehoteq RMS",
-  "description": "School Result Management System by Rehoteq Technologies, Okitipupa",
-  "start_url": "https://rehoteq1-coder.github.io/rehoteq/rms/index.html",
-  "scope": "https://rehoteq1-coder.github.io/rehoteq/rms/",
+  "description": "Cloud-based school result management, attendance, fees and reports. Built for Nigerian schools by Rehoteq Technologies, Okitipupa.",
+  "start_url": "/rms/index.html",
+  "scope": "/rms/",
   "display": "standalone",
-  "orientation": "portrait-primary",
-  "background_color": "#0a0f1e",
-  "theme_color": "#c9a84c",
-  "icons": [
+  "orientation": "any",
+  "background_color": "#030305",
+  "theme_color": "#C9A84C",
+  "lang": "en-NG",
+  "dir": "ltr",
+  "categories": ["education", "productivity", "utilities"],
+  "shortcuts": [
     {
-      "src": "https://rehoteq1-coder.github.io/rehoteq/rms/rehoteq-icon-192.png",
-      "sizes": "192x192",
-      "type": "image/png",
-      "purpose": "any maskable"
+      "name": "Score Entry",
+      "short_name": "Scores",
+      "description": "Enter student scores",
+      "url": "/rms/index.html",
+      "icons": [{ "src": "/rms/icon-192.png", "sizes": "192x192" }]
     },
     {
-      "src": "https://rehoteq1-coder.github.io/rehoteq/rms/rehoteq-icon-512.png",
-      "sizes": "512x512",
-      "type": "image/png",
-      "purpose": "any maskable"
+      "name": "Attendance",
+      "short_name": "Attendance",
+      "description": "Mark class attendance",
+      "url": "/rms/index.html",
+      "icons": [{ "src": "/rms/icon-192.png", "sizes": "192x192" }]
     }
   ],
-  "categories": ["education", "productivity"],
-  "lang": "en-NG",
-  "dir": "ltr"
+  "icons": [
+    {
+      "src": "/rms/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/rms/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "maskable"
+    },
+    {
+      "src": "/rms/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/rms/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
+    }
+  ]
 }
