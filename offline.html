@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+<title>Rehoteq RMS — Offline</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box;}
+body{
+  background:#030305;color:#F0F0F8;
+  font-family:'Outfit',system-ui,sans-serif;
+  display:flex;align-items:center;justify-content:center;
+  min-height:100vh;padding:20px;text-align:center;
+}
+.wrap{max-width:320px;}
+.hex{
+  width:72px;height:72px;
+  background:linear-gradient(145deg,#1a1400,#C9A84C 40%,#F5D060 60%,#C9A84C 80%,#100c00);
+  clip-path:polygon(50% 0%,93% 25%,93% 75%,50% 100%,7% 75%,7% 25%);
+  display:flex;align-items:center;justify-content:center;
+  margin:0 auto 20px;
+  box-shadow:0 0 30px rgba(201,168,76,0.4);
+}
+.hex span{font-family:Georgia,serif;font-weight:900;font-size:1.8rem;color:#030305;}
+h1{font-family:Georgia,serif;font-size:1.6rem;color:#C9A84C;margin-bottom:10px;}
+p{font-size:0.85rem;color:rgba(255,255,255,0.45);line-height:1.65;margin-bottom:24px;}
+button{
+  background:#C9A84C;color:#030305;border:none;
+  padding:12px 28px;border-radius:8px;
+  font-weight:700;font-size:0.9rem;cursor:pointer;
+}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="hex"><span>R</span></div>
+  <h1>You're Offline</h1>
+  <p>No internet connection detected. Rehoteq RMS needs a connection to load your school data. Please check your network and try again.</p>
+  <button onclick="window.location.reload()">↻ Try Again</button>
+</div>
+</body>
+</html>
